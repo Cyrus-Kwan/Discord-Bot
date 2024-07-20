@@ -15,6 +15,7 @@ class Model():
         '''
         database_dir: pathlib.WindowsPath = Path(__file__).parent / "databases"
         connection: sqlite3.Connection = sqlite3.connect(database_dir / database)
+
         return connection
 
     def get_schema(self) -> dict[pd.DataFrame]:
@@ -37,12 +38,14 @@ class Model():
         '''
         Returns an sql query as a pandas dataframe object for simpler indexing.
         '''
-        columns = []
-        for value in self.cursor.execute(query).description:
-            columns.append(value[0])
+        with self.connection:
+            columns = []
+            for value in self.cursor.execute(query).description:
+                columns.append(value[0])
 
-        sql = pd.read_sql_query(query, self.connection)
-        selection = pd.DataFrame(sql, columns=columns)
+            sql = pd.read_sql_query(query, self.connection)
+            selection = pd.DataFrame(sql, columns=columns)
+
         return selection
 
 def main():
