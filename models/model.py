@@ -2,6 +2,8 @@ from pathlib import Path
 import pandas as pd
 import sqlite3
 
+from utils import write_sql, color
+
 class Model():
     def __init__(self, database:str):
         self.connection: sqlite3.Connection = self.database_connect(database)
@@ -36,10 +38,20 @@ class Model():
 
     def select(self, query:str) -> pd.DataFrame:
         '''
-        Returns an sql query as a pandas dataframe object for simpler indexing.
+        Returns an SQL query as a pandas DataFrame object for simpler indexing.
+        Ensures only SELECT queries are allowed and guards against SQL injection.
         '''
+        if len(query.split(";")) > 2:
+            # 2 covers both cases where the query does or doesn't end with a ';' character
+            error_message = "Only a single query is allowed."
+            raise ValueError(f"{color['red']}{error_message}{color['white']}")
+
+        if write_sql(query):
+            error_message = "Only SELECT queries are allowed."
+            raise ValueError(f"{color['red']}{error_message}{color['white']}")
+
         with self.connection:
-            columns = []
+            columns: list[str] = []
             for value in self.cursor.execute(query).description:
                 columns.append(value[0])
 
@@ -49,8 +61,13 @@ class Model():
         return selection
 
 def main():
-    mod = Model("bot_config.db")
-    print(mod.schema["bot_config"][mod.schema["bot_config"]["bot_name"] == "cmd#7080"]["access_token"])
+    mod = Model("test_cases.db")
+    sql = """
+    INSERT INTO people (first_name, last_name, age, gender) VALUES
+    ('John', 'Snow', 34, 'm')
+    """
+    mod.select(sql)
+    print(mod.schema["people"])
 
 if __name__ == "__main__":
     main()
