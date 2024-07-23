@@ -1,8 +1,15 @@
+# PACKAGES::
 from pathlib import Path
 import pandas as pd
 import sqlite3
+import sys
 
-from utils import write_sql, color
+# ENVIRONMENT::
+PYTHONPATH = Path(__file__).parents[1].__str__()
+if PYTHONPATH not in sys.path:
+    sys.path.append(PYTHONPATH)
+
+from models import *
 
 class Model():
     def __init__(self, database:str):
@@ -36,6 +43,7 @@ class Model():
 
         return schema
 
+# Database Operations::
     def select(self, query:str) -> pd.DataFrame:
         '''
         Returns an SQL query as a pandas DataFrame object for simpler indexing.
@@ -44,11 +52,11 @@ class Model():
         if len(query.split(";")) > 2:
             # 2 covers both cases where the query does or doesn't end with a ';' character
             error_message = "Only a single query is allowed."
-            raise ValueError(f"{color['red']}{error_message}{color['white']}")
+            raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
-        if write_sql(query):
+        if utils.write_sql(query):
             error_message = "Only SELECT queries are allowed."
-            raise ValueError(f"{color['red']}{error_message}{color['white']}")
+            raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
         with self.connection:
             columns: list[str] = []
