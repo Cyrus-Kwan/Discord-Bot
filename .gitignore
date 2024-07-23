@@ -1,2 +1,3 @@
 models/scripts/bot_config.sql
 models/databases/bot_config.db
+models/__pycache__/
