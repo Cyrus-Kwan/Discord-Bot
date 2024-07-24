@@ -33,18 +33,18 @@ class Model():
         '''
         sql: str = "SELECT name FROM sqlite_master WHERE type='table';"
         selection: list[tuple] = self.cursor.execute(sql).fetchall()
-        table_names: pd.DataFrame = self.select(sql)["name"]
+        table_names: pd.DataFrame = self.read(sql)["name"]
 
         # Dictionary containing the tables in the database stored as pandas dataframes
         schema: dict[pd.DataFrame] = {}
         for table in table_names:
             sql = f"SELECT * FROM {table};"
-            schema[table] = self.select(sql)
+            schema[table] = self.read(sql)
 
         return schema
 
 # Database Operations::
-    def select(self, query:str) -> pd.DataFrame:
+    def read(self, query:str) -> pd.DataFrame:
         '''
         Returns an SQL query as a pandas DataFrame object for simpler indexing.
         Ensures only SELECT queries are allowed and guards against SQL injection.
@@ -54,7 +54,7 @@ class Model():
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
-        if utils.write_sql(query):
+        if not utils.read_sql(query):
             error_message = "Only SELECT queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
@@ -64,18 +64,52 @@ class Model():
                 columns.append(value[0])
 
             sql = pd.read_sql_query(query, self.connection)
-            selection = pd.DataFrame(sql, columns=columns)
+            select = pd.DataFrame(sql, columns=columns)
 
-        return selection
+        return select
+
+    def write(self, query:str) -> None:
+        '''
+        Writes to an existing database using the given sql query.
+        Ensures that 
+        '''
+        if len(query.split(";")) > 2:
+            # 2 covers both cases where the query does or doesn't end with a ';' character
+            error_message = "Only a single query is allowed."
+            raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+
+        if not utils.write_sql(query):
+            error_message = "Only 'INSERT', 'UPDATE', 'DELETE', 'DROP', or 'ALTER' queries are allowed."
+            raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+
+        with self.connection:
+            self.cursor.execute(query)
+            self.connection.commit()
+
+        return None
 
 def main():
     mod = Model("test_cases.db")
     sql = """
     INSERT INTO people (first_name, last_name, age, gender) VALUES
-    ('John', 'Snow', 34, 'm')
+    ('John', 'Snow', 34, 'm');
     """
-    mod.select(sql)
-    print(mod.schema["people"])
+    mod.write(sql)
+
+    sql = """
+    SELECT * FROM people;
+    """
+    print(mod.read(sql))
+
+    sql = """
+    DELETE FROM people WHERE first_name='John' AND last_name='Snow';
+    """
+    mod.write(sql)
+
+    sql = """
+    SELECT * FROM people;
+    """
+    print(mod.read(sql))
 
 if __name__ == "__main__":
     main()
