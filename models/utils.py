@@ -13,15 +13,15 @@ color = {
 # SQL QUERY VALIDATION::
 def write_sql(query:str):
     write_sql = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER"]
-    for write in write_sql:
-        if write in query.upper():
+    for keyword in write_sql:
+        if keyword in query.upper():
             return True
     return False
 
 def read_sql(query:str):
     read_sql = ["SELECT"]
-    for read in write_sql:
-        if read in query.upper():
+    for keyword in read_sql:
+        if keyword in query.upper():
             return True
     return False
 
