@@ -1,5 +1,6 @@
 # PACKAGES::
 import discord
+from discord.ext import commands
 import pandas as pd
 
 # ENVIRONMENT::
@@ -14,15 +15,15 @@ if PYTHONPATH not in sys.path:
 from models.model import Model
 
 class Bot(discord.Client):
+    def __init__(self, bot_name:str, intents:discord.Intents):
+        super().__init__(intents=intents)
+
+        # Run the bot using private access token
+        self.run(get_token(bot_name=bot_name))
+
     async def on_ready(self) -> discord.Client:
         print(f"Logged in as: {self.user}")
         return self.user
-
-    async def on_message(self, message:discord.Message):
-        if message.author == self.user:
-            return
-
-        await message.channel.send()
 
 def get_token(bot_name:str) -> str:
     # Access the database
@@ -37,10 +38,7 @@ def get_token(bot_name:str) -> str:
 def main():
     # Bot configuration
     intents = discord.Intents.all()
-    bot = Bot(intents=intents)
-
-    # Run the bot using private access token
-    bot.run(get_token("cmd#7080"))
+    bot = Bot(bot_name="cmd#7080", intents=intents)
 
 if __name__ == "__main__":
     main()
