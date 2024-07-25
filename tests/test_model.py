@@ -1,5 +1,6 @@
 # PACKAGES::
 import unittest
+import asyncio
 import pandas as pd
 import pandas.testing as pdt
 
@@ -17,7 +18,7 @@ from models.model import Model
 class TestModel(unittest.TestCase):
     model = Model("test_cases.db")
 
-    def test_select(self):
+    async def test_read(self):
         # TEST CASE 1:: 
         data = {
             "id": [1, 2, 3, 4, 5], 
@@ -28,7 +29,8 @@ class TestModel(unittest.TestCase):
         expected = pd.DataFrame(data=data)
         sql = "SELECT * FROM movies"
         try:
-            pdt.assert_frame_equal(self.model.select(sql), expected)
+            result = await self.model.select(sql)
+            pdt.assert_frame_equal(result, expected)
         except AssertionError as e:
             self.fail(f"DataFrames are not equal: {e}")
 
@@ -42,7 +44,8 @@ class TestModel(unittest.TestCase):
         expected = pd.DataFrame(data=data)
         sql = "SELECT * FROM movies WHERE score > 6;"
         try:
-            pdt.assert_frame_equal(self.model.select(sql), expected)
+            result = await self.model.select(sql)
+            pdt.assert_frame_equal(result, expected)
         except AssertionError as e:
             self.fail(f"DataFrames are not equal: {e}")
 
