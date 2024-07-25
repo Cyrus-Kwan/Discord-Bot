@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 import sqlite3
 import sys
+import asyncio
 
 # ENVIRONMENT::
 PYTHONPATH = Path(__file__).parents[1].__str__()
@@ -13,12 +14,24 @@ if PYTHONPATH not in sys.path:
 from models import *
 
 class Model():
+    # Constructor
     def __init__(self, database:str):
         self.connection: sqlite3.Connection = self.database_connect(database)
         self.cursor: sqlite3.Connection.cursor = self.connection.cursor()
-        self.schema: set[pd.DataFrame] = self.get_schema()
+        self.schema: dict[pd.DataFrame] = None
 
-# Initialization helpers::
+    @classmethod
+    async def create(cls, database:str):
+        '''
+        Asynchronous method for model creation.
+        This should be called as 'obj = Model.create(database)' whenever a new model is created instead of 'obj = Model(database)'
+        '''
+        self = cls(database=database)
+        self.schema = await self.get_schema()
+
+        return self
+
+    # Initialization helpers::
     def database_connect(self, database:str) -> sqlite3.Connection:
         '''
         Creates a connection to the specified database file.
@@ -28,24 +41,25 @@ class Model():
 
         return connection
 
-    def get_schema(self) -> dict[pd.DataFrame]:
+    async def get_schema(self) -> dict[pd.DataFrame]:
         '''
         Returns the schema of the entire database as a map containing each table to their names.
         '''
         sql: str = "SELECT name FROM sqlite_master WHERE type='table';"
         selection: list[tuple] = self.cursor.execute(sql).fetchall()
-        table_names: pd.DataFrame = self.read(sql)["name"]
+        table: pd.DataFrame = await self.read(sql)
+        table_names: pd.Series = table["name"]
 
         # Dictionary containing the tables in the database stored as pandas dataframes
         schema: dict[pd.DataFrame] = {}
         for table in table_names:
             sql = f"SELECT * FROM {table};"
-            schema[table] = self.read(sql)
+            schema[table] = await self.read(sql)
 
         return schema
 
-# Database Operations::
-    def read(self, query:str) -> pd.DataFrame:
+    # Database Operations::
+    async def read(self, query:str) -> pd.DataFrame:
         '''
         Returns an SQL query as a pandas DataFrame object for simpler indexing.
         Ensures only SELECT queries are allowed and guards against SQL injection.
@@ -69,7 +83,7 @@ class Model():
 
         return select
 
-    def write(self, query:str) -> None:
+    async def write(self, query:str) -> None:
         '''
         Writes to an existing database using the given sql query.
         Ensures that 
@@ -89,28 +103,28 @@ class Model():
 
         return None
 
-def main():
-    mod = Model("test_cases.db")
+async def main():
+    mod = await Model.create("test_cases.db")
     sql = """
     INSERT INTO people (first_name, last_name, age, gender) VALUES
     ('John', 'Snow', 34, 'm');
     """
-    mod.write(sql)
+    await mod.write(sql)
 
     sql = """
     SELECT * FROM people;
     """
-    print(mod.read(sql))
+    print(await mod.read(sql))
 
     sql = """
     DELETE FROM people WHERE first_name='John' AND last_name='Snow';
     """
-    mod.write(sql)
+    await mod.write(sql)
 
     sql = """
     SELECT * FROM people;
     """
-    print(mod.read(sql))
+    print(await mod.read(sql))
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
