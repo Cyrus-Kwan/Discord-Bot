@@ -69,7 +69,7 @@ class Model():
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
-        if not utils.read_sql(query):
+        if not utils.sql_contains(query, {"SELECT"}):
             error_message = "Only SELECT queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
@@ -93,8 +93,8 @@ class Model():
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
-        if not utils.write_sql(query):
-            error_message = "Only 'INSERT', 'UPDATE', 'DELETE', 'DROP', or 'ALTER' queries are allowed."
+        if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE"}):
+            error_message = "Only 'INSERT', 'UPDATE', or 'DELETE' queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
         with self.connection:
