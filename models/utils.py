@@ -11,16 +11,14 @@ color = {
 }
 
 # SQL QUERY VALIDATION::
-def write_sql(query:str):
-    write_sql = ["INSERT", "UPDATE", "DELETE", "DROP", "ALTER"]
-    for keyword in write_sql:
-        if keyword in query.upper():
+def sql_contains(query:str, keywords:set[str]) -> bool:
+    if type(keywords) == str:
+        if keywords in query:
             return True
-    return False
+        else:
+            return False
 
-def read_sql(query:str):
-    read_sql = ["SELECT"]
-    for keyword in read_sql:
+    for keyword in keywords:
         if keyword in query.upper():
             return True
     return False
