@@ -1,6 +1,6 @@
 # PACKAGES::
 import discord
-from discord.ext import commands
+from discord import app_commands
 import pandas as pd
 
 # ENVIRONMENT::
@@ -18,12 +18,26 @@ class Bot(discord.Client):
     def __init__(self, bot_name:str, intents:discord.Intents):
         super().__init__(intents=intents)
 
+        # App and slash command support
+        self.tree = app_commands.CommandTree(self)
+
         # Run the bot using private access token
         self.run(get_token(bot_name=bot_name))
 
     async def on_ready(self) -> discord.Client:
         print(f"Logged in as: {self.user}")
         return self.user
+
+    # TODO: Figure out why this works
+    async def setup_hook(self) -> None:
+        # Register commands here
+        @self.tree.command(name="echo", description="Echoes a message.")
+        @app_commands.describe(message="The message to echo.")
+        async def echo(interaction:discord.Interaction, message:str) -> None:
+            await interaction.response.send_message(message)
+
+        # Sync the application commands with the server
+        await self.tree.sync()
 
 def get_token(bot_name:str) -> str:
     # Access the database
