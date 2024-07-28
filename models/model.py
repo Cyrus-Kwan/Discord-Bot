@@ -93,8 +93,8 @@ class Model():
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
-        if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE"}):
-            error_message = "Only 'INSERT', 'UPDATE', or 'DELETE' queries are allowed."
+        if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE", "ALTER", "CREATE"}):
+            error_message = "Only 'ALTER', 'CREATE', 'INSERT', 'UPDATE', or 'DELETE' queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
 
         with self.connection:
@@ -104,7 +104,7 @@ class Model():
         return None
 
 async def main():
-    mod = await Model.create("test_cases.db")
+    mod = await Model.create("bot_config.db")
     sql = """
     INSERT INTO people (first_name, last_name, age, gender) VALUES
     ('John', 'Snow', 34, 'm');
