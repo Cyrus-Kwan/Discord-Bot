@@ -15,6 +15,7 @@ if PYTHONPATH not in sys.path:
 
 # MODULES::
 from models.model import Model
+import commands
 
 class Bot(discord.Client):
     def __init__(self, intents:discord.Intents):
@@ -26,14 +27,11 @@ class Bot(discord.Client):
     async def on_ready(self) -> discord.Client:
         print(f"Logged in as: {self.user}")
 
-        return self.user
+        # return self.user
 
     async def setup_hook(self) -> None:
         # Register commands here
-        @self.tree.command(name="echo", description="Echoes a message.")
-        @app_commands.describe(message="Message to echo.")
-        async def echo(interaction:discord.Interaction, message:str) -> None:
-            await interaction.response.send_message(message)
+        commands.Echo(self)
 
         # Sync the application commands with the server
         await self.tree.sync()
