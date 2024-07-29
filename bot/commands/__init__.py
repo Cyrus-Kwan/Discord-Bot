@@ -8,3 +8,5 @@ if PYTHONPATH not in sys.path:
 
 # MODULES::
 from commands.echo import Echo
+from commands.users import Users
+from commands.shutdown import Shutdown

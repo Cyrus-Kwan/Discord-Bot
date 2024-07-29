@@ -6,9 +6,9 @@ class Echo():
     '''
     Messages user input in the same channel that the command was called.
     '''
-    def __init__(self, bot:discord.Client):
-        self.bot: discord.Client = bot
-        self.tree: discord.Client.CommandTree = bot.tree
+    def __init__(self, client:discord.Client):
+        self.client: discord.Client = client
+        self.tree: discord.Client.CommandTree = client.tree
 
         @self.tree.command(name="echo", description="Echoes a message.")
         @app_commands.describe(message="Message to echo.")
