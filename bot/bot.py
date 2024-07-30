@@ -21,8 +21,11 @@ class Client(discord.Client):
     def __init__(self, intents:discord.Intents):
         super().__init__(intents=intents)
 
+        # Class attributes for command interaction
+        self.users: Model = None
+
         # App and slash command support
-        self.tree = app_commands.CommandTree(self)
+        self.tree: app_commands.CommandTree = app_commands.CommandTree(self)
 
     async def on_ready(self) -> discord.Client:
         print(f"Logged in as: {self.user}")

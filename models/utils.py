@@ -12,6 +12,9 @@ color = {
 
 # SQL QUERY VALIDATION::
 def sql_contains(query:str, keywords:set[str]) -> bool:
+    '''
+    Checks a given string whether or not a specific keyword or keywords in a set is present.
+    '''
     if type(keywords) == str:
         if keywords in query:
             return True
