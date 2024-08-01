@@ -4,6 +4,7 @@ import pandas as pd
 import sqlite3
 import sys
 import asyncio
+import re
 
 # ENVIRONMENT::
 PYTHONPATH = Path(__file__).parents[1].__str__()
@@ -11,6 +12,7 @@ if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
 # MODULES::
+import models
 from models import *
 
 class Model():
@@ -21,12 +23,14 @@ class Model():
         self.schema: dict[pd.DataFrame] = None
 
     @classmethod
-    async def create(cls, database:str):
+    async def create(cls, database:str, script:str=None):
         '''
         Asynchronous method for model creation.
         This should be called as 'obj = Model.create(database)' whenever a new model is created instead of 'obj = Model(database)'
         '''
         self = cls(database=database)
+        if script:
+            await self.inject(script)
         self.schema = await self.get_schema()
 
         return self
@@ -68,10 +72,12 @@ class Model():
             # 2 covers both cases where the query does or doesn't end with a ';' character
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+            return None
 
         if not utils.sql_contains(query, {"SELECT"}):
             error_message = "Only SELECT queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+            return None
 
         with self.connection:
             columns: list[str] = []
@@ -92,39 +98,61 @@ class Model():
             # 2 covers both cases where the query does or doesn't end with a ';' character
             error_message = "Only a single query is allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+            return None
 
         if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE", "ALTER", "CREATE"}):
             error_message = "Only 'ALTER', 'CREATE', 'INSERT', 'UPDATE', or 'DELETE' queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+            return None
 
         with self.connection:
             self.cursor.execute(query)
             self.connection.commit()
 
+        self.schema = await self.get_schema()
+
+        return None
+
+    async def inject(self, script:str) -> None:
+        '''
+        Writes to a database using content from a given .sql file.
+        '''
+        if not re.search(r".sql$", script):
+            error_message = "Expected .sql file."
+            raise AttributeError(f"{utils.color['red']}{error_message}{utils.color['white']}")
+            return None
+
+        script_path = Path(*models.scripts.__path__)
+        with open(f"{script_path}/{script}") as content:
+            sql = content.read()
+            for query in sql.split(";")[:-1]:
+                await self.write(query)
+
+        self.schema = await self.get_schema()
+
         return None
 
 async def main():
-    mod = await Model.create("bot_config.db")
-    sql = """
-    INSERT INTO people (first_name, last_name, age, gender) VALUES
-    ('John', 'Snow', 34, 'm');
-    """
-    await mod.write(sql)
+    mod = await Model.create("test.db")
+    # sql = """
+    # INSERT INTO people (first_name, last_name, age, gender) VALUES
+    # ('John', 'Snow', 34, 'm');
+    # """
+    # await mod.write(sql)
 
-    sql = """
-    SELECT * FROM people;
-    """
-    print(await mod.read(sql))
+    # sql = """
+    # SELECT * FROM people;
+    # """
+    # print(await mod.read(sql))
 
-    sql = """
-    DELETE FROM people WHERE first_name='John' AND last_name='Snow';
-    """
-    await mod.write(sql)
+    # sql = """
+    # DELETE FROM people WHERE first_name='John' AND last_name='Snow';
+    # """
+    # await mod.write(sql)
 
-    sql = """
-    SELECT * FROM people;
-    """
-    print(await mod.read(sql))
+    print(mod.schema)
+    await mod.inject("test_cases.sql")
+    print(mod.schema)
 
 if __name__ == "__main__":
     asyncio.run(main())
