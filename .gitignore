@@ -1,5 +1,5 @@
-models/scripts/config.sql
 models/databases/config.db
+models/databases/main.db
 models/__pycache__/
 bot/__pycache__/
 bot/commands/__pycache__/
