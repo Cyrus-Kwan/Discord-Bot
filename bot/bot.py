@@ -15,6 +15,7 @@ if PYTHONPATH not in sys.path:
 
 # MODULES::
 from models.model import Model
+import models.scripts as scripts
 import commands
 
 class Client(discord.Client):
@@ -22,8 +23,8 @@ class Client(discord.Client):
         super().__init__(intents=intents)
 
         # Class attributes for command interaction
-        self.users: Model = None
-
+        self.model: Model = None
+            
         # App and slash command support
         self.tree: app_commands.CommandTree = app_commands.CommandTree(self)
 
@@ -37,6 +38,10 @@ class Client(discord.Client):
         commands.Echo(self)
         commands.Users(self)
         commands.Shutdown(self)
+
+        # Create main database on startup and necessary tables
+        # TODO: Populate user table with user data
+        self.model = await Model.create(database="main.db", script="users.sql")
 
         # Sync the application commands with the server
         await self.tree.sync()
