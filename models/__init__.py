@@ -9,3 +9,4 @@ if PYTHONPATH not in sys.path:
 # MODULES::
 from models import utils
 from models import model
+from models import scripts
