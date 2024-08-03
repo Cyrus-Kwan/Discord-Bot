@@ -4,6 +4,7 @@ from discord.ext import commands
 from discord import app_commands
 import pandas as pd
 import asyncio
+import sqlite3
 
 # ENVIRONMENT::
 import sys
@@ -29,22 +30,50 @@ class Client(discord.Client):
         self.tree: app_commands.CommandTree = app_commands.CommandTree(self)
 
     async def on_ready(self) -> discord.Client:
+        # Create main database on startup and necessary tables
+        self.model = await Model.create(database="main.db", script="users.sql")
+        self.load_users()
+
+        print(await self.model.read("SELECT * FROM users;"))
+
         print(f"Logged in as: {self.user}")
 
         return self.user
 
     async def setup_hook(self) -> None:
+        '''
+        Coroutine called to setup the bot.
+        Asynchronously registers the specified commands from ".commands/"
+        '''
         # Register commands here
         commands.Echo(self)
         commands.Users(self)
         commands.Shutdown(self)
 
-        # Create main database on startup and necessary tables
-        # TODO: Populate user table with user data
-        self.model = await Model.create(database="main.db", script="users.sql")
-
         # Sync the application commands with the server
         await self.tree.sync()
+
+    async def load_users(self) -> None:
+        '''Currently a very crude solution to populating the user database on startup'''
+        # TODO: Populate user table with user data
+        for user in self.users:
+            if user.bot:
+                continue
+
+            try:
+                sql = f"""
+                UPDATE users SET
+                user_id = {user.id},
+                server_name = '{user.name}',
+                global_name = '{user.global_name}'
+                """
+                await self.model.write(sql)
+            except sqlite3.IntegrityError:
+                sql = f"""
+                INSERT INTO users (user_id, server_name, global_name) VALUES
+                ({user.id}, '{user.name}', '{user.global_name}');
+                """
+                await self.model.write(sql)
 
 async def get_token(client_name:str) -> str:
     # Access the database
