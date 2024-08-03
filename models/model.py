@@ -89,7 +89,7 @@ class Model():
 
         return select
 
-    async def write(self, query:str) -> None:
+    async def write(self, query:str, values:dict=None) -> None:
         '''
         Writes to an existing database using the given sql query.
         Ensures that 
@@ -106,7 +106,11 @@ class Model():
             return None
 
         with self.connection:
-            self.cursor.execute(query)
+            # Receives value bindings from sql query if given
+            if values:
+                self.cursor.execute(query, values)
+            else:
+                self.cursor.execute(query)
             self.connection.commit()
 
         self.schema = await self.get_schema()
@@ -133,26 +137,31 @@ class Model():
         return None
 
 async def main():
-    mod = await Model.create("test.db")
-    # sql = """
-    # INSERT INTO people (first_name, last_name, age, gender) VALUES
-    # ('John', 'Snow', 34, 'm');
-    # """
-    # await mod.write(sql)
+    mod = await Model.create("test_cases.db")
+    sql = """
+    INSERT INTO people (first_name, last_name, age, gender) VALUES
+    (:first_name, :last_name, :age, :gender);
+    """
+    await mod.write(query=sql, values={"first_name":"John", "last_name":"Snow", "age":34, "gender":"m"})
 
-    # sql = """
-    # SELECT * FROM people;
-    # """
-    # print(await mod.read(sql))
+    sql = """
+    SELECT * FROM people;
+    """
+    print(await mod.read(sql))
 
-    # sql = """
-    # DELETE FROM people WHERE first_name='John' AND last_name='Snow';
-    # """
-    # await mod.write(sql)
+    sql = """
+    DELETE FROM people WHERE first_name='John' AND last_name='Snow';
+    """
+    await mod.write(sql)
 
-    print(mod.schema)
-    await mod.inject("test_cases.sql")
-    print(mod.schema)
+    sql = """
+    SELECT * FROM people;
+    """
+    print(await mod.read(sql))
+
+    # print(mod.schema)
+    # await mod.inject("test_cases.sql")
+    # print(mod.schema)
 
 if __name__ == "__main__":
     asyncio.run(main())
