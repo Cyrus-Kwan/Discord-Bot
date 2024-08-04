@@ -32,7 +32,7 @@ class Client(discord.Client):
     async def on_ready(self) -> discord.Client:
         # Create main database on startup and necessary tables
         self.model = await Model.create(database="main.db", script="users.sql")
-        self.load_users()
+        await self.load_users()
 
         print(await self.model.read("SELECT * FROM users;"))
 
@@ -60,20 +60,15 @@ class Client(discord.Client):
             if user.bot:
                 continue
 
-            try:
-                sql = f"""
-                UPDATE users SET
-                user_id = {user.id},
-                server_name = '{user.name}',
-                global_name = '{user.global_name}'
-                """
-                await self.model.write(sql)
-            except sqlite3.IntegrityError:
-                sql = f"""
-                INSERT INTO users (user_id, server_name, global_name) VALUES
-                ({user.id}, '{user.name}', '{user.global_name}');
-                """
-                await self.model.write(sql)
+            sql = f"""
+            INSERT INTO users (user_id, tag, global_name) VALUES
+            (:user_id, :tag, :global_name)
+            ON CONFLICT (user_id) DO UPDATE SET
+            user_id = excluded.user_id,
+            tag = excluded.tag,
+            global_name = excluded.global_name;
+            """
+            await self.model.write(sql, {"user_id":user.id, "tag":user.name, "global_name":user.global_name})
 
 async def get_token(client_name:str) -> str:
     # Access the database
