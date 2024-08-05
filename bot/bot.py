@@ -5,6 +5,7 @@ from discord import app_commands
 import pandas as pd
 import asyncio
 import sqlite3
+import re
 
 # ENVIRONMENT::
 import sys
@@ -20,6 +21,7 @@ import models.scripts as scripts
 import commands
 
 class Client(discord.Client):
+    # CONSTRUCTOR::
     def __init__(self, intents:discord.Intents):
         super().__init__(intents=intents)
 
@@ -33,8 +35,6 @@ class Client(discord.Client):
         # Create main database on startup and necessary tables
         self.model = await Model.create(database="main.db", script="users.sql")
         await self.load_users()
-
-        print(await self.model.read("SELECT * FROM users;"))
 
         print(f"Logged in as: {self.user}")
 
@@ -53,6 +53,7 @@ class Client(discord.Client):
         # Sync the application commands with the server
         await self.tree.sync()
 
+    # USER UTILITIES::
     async def load_users(self) -> None:
         '''Currently a very crude solution to populating the user database on startup'''
         # TODO: Populate user table with user data
@@ -69,6 +70,20 @@ class Client(discord.Client):
             global_name = excluded.global_name;
             """
             await self.model.write(sql, {"user_id":user.id, "tag":user.name, "global_name":user.global_name})
+
+    async def user_map(self, user:discord.User) -> dict:
+        '''
+        Method returns a dictionary of all non-callable attributes in a User object.
+        '''
+        user_map: dict = {}
+        pattern: str = r"^[^_].*[^_]$"
+        public = lambda attr: re.search(pattern=pattern, string=attr)
+        method = lambda attr: callable(getattr(user, attr))
+        for attribute in user.__dir__():
+            if public(attribute) and not method(attribute):
+                user_map[attribute] = getattr(user, attribute)
+
+        return user_map
 
 async def get_token(client_name:str) -> str:
     # Access the database
