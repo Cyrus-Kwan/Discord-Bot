@@ -45,6 +45,7 @@ class Model():
 
         return connection
 
+    # Getters::
     async def get_schema(self) -> dict[pd.DataFrame]:
         '''
         Returns the schema of the entire database as a map containing each table to their names.
@@ -61,6 +62,21 @@ class Model():
             schema[table] = await self.read(sql)
 
         return schema
+
+    async def primary_key(self, table:str) -> str:
+        with self.connection:
+            # Query the PRAGMA table_info for the specified table
+            sql: str = f"PRAGMA table_info({table})"
+            self.cursor.execute(sql)
+
+            # PRAGMA table
+            column_names = [description[0] for description in self.cursor.description]
+            columns_info: list[tuple] = self.cursor.fetchall()
+
+            # Dataframe representation
+            pragma = pd.DataFrame(data=columns_info, columns=column_names)
+
+        return pragma[pragma["pk"] == 1]["name"].values
 
     # Database Operations::
     async def read(self, query:str) -> pd.DataFrame:
@@ -136,32 +152,21 @@ class Model():
 
         return None
 
+    async def update(self, table:str, values:dict) -> None:
+        primary_key: str = None
+        columns: str = ", ".join(self.get_schema[table].keys)
+        pointers: str = ", ".join(f":{col}" for col in columns)
+        update_clause: str = ", ".join(f"{col}=excluded.{col}" for col in columns)
+        
+        sql = f"""
+        INSERT INTO {table} ({columns}) VALUES ({pointers})
+        ON CONFLICT ({primary_key}) DO UPDATE SET {update_clause}
+        """
+        return None
+
 async def main():
     mod = await Model.create("test_cases.db")
-    sql = """
-    INSERT INTO people (first_name, last_name, age, gender) VALUES
-    (:first_name, :last_name, :age, :gender);
-    """
-    await mod.write(query=sql, values={"first_name":"John", "last_name":"Snow", "age":34, "gender":"m"})
-
-    sql = """
-    SELECT * FROM people;
-    """
-    print(await mod.read(sql))
-
-    sql = """
-    DELETE FROM people WHERE first_name='John' AND last_name='Snow';
-    """
-    await mod.write(sql)
-
-    sql = """
-    SELECT * FROM people;
-    """
-    print(await mod.read(sql))
-
-    # print(mod.schema)
-    # await mod.inject("test_cases.sql")
-    # print(mod.schema)
+    print(await mod.primary_key("people"))
 
 if __name__ == "__main__":
     asyncio.run(main())
