@@ -153,9 +153,9 @@ class Model():
         return None
 
     async def update(self, table:str, values:dict) -> None:
-        """
+        '''
         Inserts a dictionary into the specified table
-        """
+        '''
         columns = self.schema[table].columns
 
         primary_key: str = ", ".join(await self.primary_key(table=table))
@@ -167,7 +167,6 @@ class Model():
         INSERT INTO {table} ({column_names}) VALUES ({pointers})
         ON CONFLICT ({primary_key}) DO UPDATE SET {update_clause}
         """
-        print(sql)
         await self.write(query=sql, values=values)
 
         return None
@@ -180,11 +179,13 @@ async def main():
     print(await mod.read(sql))
 
     insert = {
-        "id":10,
-        "first_name":"Aiden",
-        "last_name":"Ross",
-        "age":29,
-        "gender":"m"
+        "id":13,
+        "first_name":"Allan",
+        "last_name":"Ford",
+        "age":32,
+        "gender":"m",
+        "pronouns":"they/them",
+        "address":"23 Echo Street, Hornsby"
     }
     await mod.update(table="people", values=insert)
 
