@@ -63,7 +63,7 @@ class Model():
 
         return schema
 
-    async def primary_key(self, table:str) -> str:
+    async def primary_key(self, table:str) -> pd.Series:
         with self.connection:
             # Query the PRAGMA table_info for the specified table
             sql: str = f"PRAGMA table_info({table})"
@@ -76,7 +76,7 @@ class Model():
             # Dataframe representation
             pragma = pd.DataFrame(data=columns_info, columns=column_names)
 
-        return pragma[pragma["pk"] == 1]["name"].values
+        return pragma[pragma["pk"] == 1]["name"]
 
     # Database Operations::
     async def read(self, query:str) -> pd.DataFrame:
@@ -153,20 +153,45 @@ class Model():
         return None
 
     async def update(self, table:str, values:dict) -> None:
-        primary_key: str = None
-        columns: str = ", ".join(self.get_schema[table].keys)
+        """
+        Inserts a dictionary into the specified table
+        """
+        columns = self.schema[table].columns
+
+        primary_key: str = ", ".join(await self.primary_key(table=table))
+        column_names: str = ", ".join(columns)
         pointers: str = ", ".join(f":{col}" for col in columns)
         update_clause: str = ", ".join(f"{col}=excluded.{col}" for col in columns)
         
-        sql = f"""
-        INSERT INTO {table} ({columns}) VALUES ({pointers})
+        sql: str = f"""
+        INSERT INTO {table} ({column_names}) VALUES ({pointers})
         ON CONFLICT ({primary_key}) DO UPDATE SET {update_clause}
         """
+        print(sql)
+        await self.write(query=sql, values=values)
+
         return None
 
 async def main():
     mod = await Model.create("test_cases.db")
-    print(await mod.primary_key("people"))
+    sql = """
+    SELECT * FROM people;
+    """
+    print(await mod.read(sql))
+
+    insert = {
+        "id":10,
+        "first_name":"Aiden",
+        "last_name":"Ross",
+        "age":29,
+        "gender":"m"
+    }
+    await mod.update(table="people", values=insert)
+
+    sql = """
+    SELECT * FROM people;
+    """
+    print(await mod.read(sql))
 
 if __name__ == "__main__":
     asyncio.run(main())
