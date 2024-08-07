@@ -1,6 +1,8 @@
 -- Store basic user information WIP
 CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    server_name TEXT,
-    global_name TEXT
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    global_name TEXT,
+    display_name TEXT,
+    created_at DATETIME
 );
