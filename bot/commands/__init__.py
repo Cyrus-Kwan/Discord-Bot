@@ -7,6 +7,4 @@ if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
 # MODULES::
-from commands.echo import Echo
-from commands.users import Users
-from commands.shutdown import Shutdown
+from commands.utils import Utils
