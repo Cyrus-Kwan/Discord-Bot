@@ -1,6 +1,5 @@
 # PACKAGES::
 import discord
-from discord.ext import commands
 from discord import app_commands
 import pandas as pd
 import asyncio
@@ -18,7 +17,7 @@ if PYTHONPATH not in sys.path:
 # MODULES::
 from models.model import Model
 import models.scripts as scripts
-import commands
+from commands import *
 
 class Client(discord.Client):
     # CONSTRUCTOR::
@@ -32,10 +31,6 @@ class Client(discord.Client):
         self.tree: app_commands.CommandTree = app_commands.CommandTree(self)
 
     async def on_ready(self) -> discord.Client:
-        # Create main database on startup and necessary tables
-        self.model = await Model.create(database="main.db", script="users.sql")
-        await self.load_users()
-
         print(f"Logged in as: {self.user}")
 
         return self.user
@@ -45,40 +40,42 @@ class Client(discord.Client):
         Coroutine called to setup the bot.
         Asynchronously registers the specified commands from ".commands/"
         '''
+        # Create main database on startup and necessary tables
+        self.model = await Model.create(database="main.db", script="users.sql")
+        await self.upsert_users()
+
         # Register commands here
-        commands.Echo(self)
-        commands.Users(self)
-        commands.Shutdown(self)
+        await Utils.register(self)
 
         # Sync the application commands with the server
         await self.tree.sync()
 
     # USER UTILITIES::
-    async def load_users(self) -> None:
+    async def upsert_users(self) -> None:
         '''
-        Calls an upsert on the users table
+        Calls an upsert on the users table for all users
         '''
-        # TODO: Populate user table with user data
         for user in self.users:
             if user.bot:
                 continue
             
-            target = await self.user_map(user)
-            await self.model.update(table="users", values=target)
+            target = await self.user_table(user=user)
+            await self.model.upsert(table="users", values=target)
 
-    async def user_map(self, user:discord.User) -> dict:
+    async def user_table(self, user:discord.User) -> dict:
         '''
         Method returns a dictionary of all non-callable attributes in a User object.
         '''
-        user_map: dict = {}
+        user_table: dict = {}
         pattern: str = r"^[^_].*[^_]$"
         public = lambda attr: re.search(pattern=pattern, string=attr)
         method = lambda attr: callable(getattr(user, attr))
+
         for attribute in user.__dir__():
             if public(attribute) and not method(attribute):
-                user_map[attribute] = getattr(user, attribute)
+                user_table[attribute] = getattr(user, attribute)
 
-        return user_map
+        return user_table
 
 async def get_token(client_name:str) -> str:
     # Access the database
