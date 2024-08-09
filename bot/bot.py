@@ -55,21 +55,16 @@ class Client(discord.Client):
 
     # USER UTILITIES::
     async def load_users(self) -> None:
-        '''Currently a very crude solution to populating the user database on startup'''
+        '''
+        Calls an upsert on the users table
+        '''
         # TODO: Populate user table with user data
         for user in self.users:
             if user.bot:
                 continue
-
-            sql = f"""
-            INSERT INTO users (user_id, tag, global_name) VALUES
-            (:user_id, :tag, :global_name)
-            ON CONFLICT (user_id) DO UPDATE SET
-            user_id = excluded.user_id,
-            tag = excluded.tag,
-            global_name = excluded.global_name;
-            """
-            await self.model.write(sql, {"user_id":user.id, "tag":user.name, "global_name":user.global_name})
+            
+            target = await self.user_map(user)
+            await self.model.update(table="users", values=target)
 
     async def user_map(self, user:discord.User) -> dict:
         '''
