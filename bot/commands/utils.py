@@ -1,4 +1,6 @@
 # PACKAGES::
+import re
+import requests
 import discord
 from discord import app_commands
 from datetime import datetime
@@ -52,9 +54,41 @@ class Utils():
             await interaction.response.send_message(user_table)
 
         @self.tree.command(name="steal", description="Adds the most recently messaged emote to the server")
-        async def steal(interaction:discord.Interaction):
-            # TODO: store user messages
-            await interaction.response.send_message("WIP")
+        async def steal(interaction:discord.Interaction, target:str=None):
+            '''
+            Adds the most recently sent emote in the channel to the server emotes.
+            A user can target an emote by specifying the exact name.
+            '''
+            # TODO: Raise exception if the emote was not found
+            # TODO: Do not add duplicate emotes
+            # TODO: Embed new emote notification
+            emote_pattern: str = r"<a?:[a-zA-Z0-9_~]+:[0-9]+>"
+            target_pattern:str = f"<a?:{target}:[0-9]+>"
+            name_pattern: str = r"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
+            id_pattern:str = r"(?:)(?=[0-9]+>)[0-9]+"
+
+            messages: pd.DataFrame = self.client.model.schema["messages"]
+            
+            for message in messages[messages["channel_id"]==interaction.channel_id]["content"][::-1]:
+                if target:
+                    emote:str = re.search(pattern=target_pattern, string=message).group()
+                else:
+                    emote: str = re.search(pattern=emote_pattern, string=message).group()
+
+                if emote:
+                    emote_name: str = re.search(pattern=name_pattern, string=emote).group()
+                    emote_id: str = re.search(pattern=id_pattern, string=emote).group()
+
+                    url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
+                    request = requests.get(url)
+
+                    # Add the new emote to the server
+                    new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
+                    await interaction.response.send_message(f"NEW EMOJI :: {new_emote}")
+                    
+                    return
+
+            return
 
     def event_commands(self):
         @self.client.event
@@ -62,12 +96,15 @@ class Utils():
             if message.author.bot:
                 return
 
-            channel_id = message.channel.id
-            message_id = message.id
-            content = message.content
-            reply = bool(message.type == discord.MessageType.reply)
-            respondent = message.reference.message_id if reply else None
-            author = message.author.id
+            if message.content == "":
+                return
+
+            channel_id: int = message.channel.id
+            message_id: int = message.id
+            content: str = message.content
+            reply: bool = bool(message.type == discord.MessageType.reply)
+            respondent: int = message.reference.message_id if reply else None
+            author: int = message.author.id
 
             insert = {
                 "message_id":message_id, 
