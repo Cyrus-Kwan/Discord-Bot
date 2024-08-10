@@ -116,8 +116,8 @@ class Model():
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
             return None
 
-        if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE", "ALTER", "CREATE"}):
-            error_message = "Only 'ALTER', 'CREATE', 'INSERT', 'UPDATE', or 'DELETE' queries are allowed."
+        if not utils.sql_contains(query, {"INSERT", "UPDATE", "DELETE", "ALTER", "CREATE", "DROP"}):
+            error_message = "Only 'ALTER', 'CREATE', 'INSERT', 'UPDATE', 'DROP' or 'DELETE' queries are allowed."
             raise ValueError(f"{utils.color['red']}{error_message}{utils.color['white']}")
             return None
 
@@ -150,9 +150,9 @@ class Model():
 
         self.schema = await self.get_schema()
 
-        return None
+        return
 
-    async def update(self, table:str, values:dict) -> None:
+    async def upsert(self, table:str, values:dict) -> None:
         '''
         Inserts a dictionary into the specified table
         '''
@@ -169,28 +169,12 @@ class Model():
         """
         await self.write(query=sql, values=values)
 
-        return None
+        return
 
 async def main():
-    mod = await Model.create("test_cases.db")
+    mod = await Model.create("main.db")
     sql = """
-    SELECT * FROM people;
-    """
-    print(await mod.read(sql))
-
-    insert = {
-        "id":13,
-        "first_name":"Allan",
-        "last_name":"Ford",
-        "age":32,
-        "gender":"m",
-        "pronouns":"they/them",
-        "address":"23 Echo Street, Hornsby"
-    }
-    await mod.update(table="people", values=insert)
-
-    sql = """
-    SELECT * FROM people;
+    SELECT * FROM messages;
     """
     print(await mod.read(sql))
 
