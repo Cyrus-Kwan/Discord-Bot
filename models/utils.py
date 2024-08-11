@@ -28,9 +28,14 @@ def sql_contains(query:str, keywords:set[str]) -> bool:
 
 def main():
     sql = """
-    SELECT * FROM sqlite_master WHERE type='table';
+    -- Store basic user information WIP
+    CREATE TABLE IF NOT EXISTS users (
+        user_id INTEGER PRIMARY KEY,
+        server_name TEXT,
+        global_name TEXT
+    )
     """
-    print(write_sql(sql))
+    print(sql_contains(sql, {"INSERT", "UPDATE", "DELETE", "ALTER", "CREATE"}))
 
 if __name__ == "__main__":
     main()
