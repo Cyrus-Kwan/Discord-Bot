@@ -2,6 +2,7 @@
 import re
 import requests
 import discord
+from discord import Client
 from discord import app_commands
 from datetime import datetime
 
@@ -14,7 +15,6 @@ if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
 # MODULES::
-from bot import *
 
 class Utils():
     '''
@@ -65,9 +65,6 @@ class Utils():
             Adds the most recently sent emote in the channel to the server emotes.
             A user can target an emote by specifying the exact name.
             '''
-            # TODO: Raise exception if the emote was not found
-            # TODO: Do not add duplicate emotes
-            # TODO: Embed new emote notification
             emote_pattern: str = r"<a?:[a-zA-Z0-9_~]+:[0-9]+>"
             target_pattern:str = f"<a?:{target}:[0-9]+>"
             name_pattern: str = r"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
