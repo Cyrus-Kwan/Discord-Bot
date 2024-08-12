@@ -105,14 +105,22 @@ class Utils():
                     )
                     await interaction.response.send_message(embed=embed)
                     return
+                else:
+                    src_url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
+                    request = requests.get(src_url)
 
-                url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
-                request = requests.get(url)
+                    # Add the new emote to the server
+                    new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
+                    new_url: str = f"https://cdn.discordapp.com/emojis/{new_emote.id}.webp?size=96&quality=lossless"
+                    embed = discord.Embed(
+                        color=discord.Color.brand_green(),
+                        title="New emote",
+                        description=f"The emote `{emote_name}` was added to the server!"
+                    )
+                    embed.set_image(url=new_url)
 
-                # Add the new emote to the server
-                new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
-                await interaction.response.send_message(f"NEW EMOJI :: {new_emote}")
-                return
+                    await interaction.response.send_message(embed=embed)
+                    return
 
             return
 
