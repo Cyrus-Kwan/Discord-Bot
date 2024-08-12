@@ -42,7 +42,13 @@ class Utils():
     def slash_commands(self):
         @self.tree.command(name="shutdown", description="Closes the client instance")
         async def shutdown(interaction:discord.Interaction) -> None:
-            await interaction.response.send_message("Feeling sleepy...")
+            embed = discord.Embed(
+                color=discord.Color.brand_green(),
+                description="Feeling sleepy...",
+                title="Shutdown"
+            )
+
+            await interaction.response.send_message(embed=embed)
             await self.client.close()
 
         @self.tree.command(name="users", description="Returns a table containing user details")
@@ -67,26 +73,46 @@ class Utils():
             name_pattern: str = r"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
             id_pattern:str = r"(?:)(?=[0-9]+>)[0-9]+"
 
-            messages: pd.DataFrame = self.client.model.schema["messages"]
+            # Abstraction for easier readability
+            row: pd.DataFrame = self.client.model.schema["messages"]
+            messages: pd.Series = row[row["channel_id"]==interaction.channel_id]["content"]
+
+            existing_emotes: dict[int] = {emoji.name:emoji.id for emoji in interaction.guild.emojis}
             
-            for message in messages[messages["channel_id"]==interaction.channel_id]["content"][::-1]:
-                if target:
-                    emote:str = re.search(pattern=target_pattern, string=message).group()
-                else:
-                    emote: str = re.search(pattern=emote_pattern, string=message).group()
-
-                if emote:
-                    emote_name: str = re.search(pattern=name_pattern, string=emote).group()
-                    emote_id: str = re.search(pattern=id_pattern, string=emote).group()
-
-                    url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
-                    request = requests.get(url)
-
-                    # Add the new emote to the server
-                    new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
-                    await interaction.response.send_message(f"NEW EMOJI :: {new_emote}")
-                    
+            for message in messages.sort_values(ascending=False):
+                try:
+                    if target:
+                        emote: str = re.search(pattern=target_pattern, string=message).group()
+                    else:
+                        emote: str = re.search(pattern=emote_pattern, string=message).group()
+                except AttributeError:
+                    embed = discord.Embed(
+                        color=discord.Color.brand_red(),
+                        title="ERROR >> No emote found..."
+                    )
+                    await interaction.response.send_message(embed=embed)
                     return
+
+                emote_name: str = re.search(pattern=name_pattern, string=emote).group()
+                emote_id: str = re.search(pattern=id_pattern, string=emote).group()
+
+                if emote_name in existing_emotes:
+                    duplicate = await interaction.guild.fetch_emoji(existing_emotes[emote_name])
+                    embed = discord.Embed(
+                        color=discord.Color.brand_red(),
+                        description=f"The emote {duplicate} already exists.",
+                        title="ERROR >> Duplicate Emote"
+                    )
+                    await interaction.response.send_message(embed=embed)
+                    return
+
+                url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
+                request = requests.get(url)
+
+                # Add the new emote to the server
+                new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
+                await interaction.response.send_message(f"NEW EMOJI :: {new_emote}")
+                return
 
             return
 
