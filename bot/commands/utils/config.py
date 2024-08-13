@@ -8,7 +8,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-PYTHONPATH = Path(__file__).parents[1].__str__()
+PYTHONPATH = Path(__file__).parents[3].__str__()
 if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
@@ -38,11 +38,12 @@ class General():
         SELECT content 
         FROM messages 
         WHERE channel_id = {id}
-        ORDER BY date_created DESC;
+        ORDER BY date_created DESC
+        LIMIT {n};
         """
         messages: pd.DataFrame = await model.read(sql)
 
-        return messages["content"].tail(n=n)
+        return messages["content"]
 
 class Steal():
     color_map = {
@@ -125,9 +126,9 @@ class Emote():
 
 async def main():
     mod = await Model.create("main.db")
-    content = await recent_messages(mod, 1272532155641233439)
+    content = await General.recent_messages(mod, 1272532155641233439)
 
-    for message in content["content"]:
+    for message in content:
         print(message)
 
 if __name__ == "__main__":
