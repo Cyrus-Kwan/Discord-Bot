@@ -15,6 +15,9 @@ if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
 # MODULES::
+from commands.utils.config import General
+from commands.utils.config import Emote
+from commands.utils.config import Steal
 
 class Utils():
     '''
@@ -42,11 +45,7 @@ class Utils():
     def slash_commands(self):
         @self.tree.command(name="shutdown", description="Closes the client instance")
         async def shutdown(interaction:discord.Interaction) -> None:
-            embed = discord.Embed(
-                color=discord.Color.brand_green(),
-                description="Feeling sleepy...",
-                title="Shutdown"
-            )
+            embed = await General.shutdown()
 
             await interaction.response.send_message(embed=embed)
             await self.client.close()
@@ -65,60 +64,46 @@ class Utils():
             Adds the most recently sent emote in the channel to the server emotes.
             A user can target an emote by specifying the exact name.
             '''
-            emote_pattern: str = r"<a?:[a-zA-Z0-9_~]+:[0-9]+>"
-            target_pattern:str = f"<a?:{target}:[0-9]+>"
-            name_pattern: str = r"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
-            id_pattern:str = r"(?:)(?=[0-9]+>)[0-9]+"
+            # Get the most recent messages
+            messages: pd.Series = await General.recent_messages(
+                model=self.client.model, 
+                id=interaction.channel_id
+                )
 
-            # Abstraction for easier readability
-            row: pd.DataFrame = self.client.model.schema["messages"]
-            messages: pd.Series = row[row["channel_id"]==interaction.channel_id]["content"]
-
-            existing_emotes: dict[int] = {emoji.name:emoji.id for emoji in interaction.guild.emojis}
+            guild: discord.Guild = interaction.guild
+            existing_emotes: dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
             
-            for message in messages.sort_values(ascending=False):
-                try:
-                    if target:
-                        emote: str = re.search(pattern=target_pattern, string=message).group()
-                    else:
-                        emote: str = re.search(pattern=emote_pattern, string=message).group()
-                except AttributeError:
-                    embed = discord.Embed(
-                        color=discord.Color.brand_red(),
-                        title="ERROR >> No emote found..."
-                    )
-                    await interaction.response.send_message(embed=embed)
-                    return
+            for message in messages:
+                emote: str = Emote.extract(message=message, target=target)
+                emote_name: str = Emote.name(emote=emote)
+                emote_id: str = Emote.id(emote=emote)
 
-                emote_name: str = re.search(pattern=name_pattern, string=emote).group()
-                emote_id: str = re.search(pattern=id_pattern, string=emote).group()
+                if not emote:
+                    continue
 
                 if emote_name in existing_emotes:
-                    duplicate = await interaction.guild.fetch_emoji(existing_emotes[emote_name])
-                    embed = discord.Embed(
-                        color=discord.Color.brand_red(),
-                        description=f"The emote {duplicate} already exists.",
-                        title="ERROR >> Duplicate Emote"
-                    )
+                    duplicate: str = await guild.fetch_emoji(existing_emotes[emote_name])
+                    embed: discord.Embed = Steal.duplicate(emote_name=duplicate)
+
                     await interaction.response.send_message(embed=embed)
                     return
                 else:
-                    src_url: str = f"https://cdn.discordapp.com/emojis/{emote_id}.webp?size=96&quality=lossless"
-                    request = requests.get(src_url)
+                    # Get the source image in byte code
+                    src: str = await General.url(img_id=emote_id)
+                    image: str = requests.get(src).content
 
                     # Add the new emote to the server
-                    new_emote = await interaction.guild.create_custom_emoji(name=emote_name, image=request.content)
-                    new_url: str = f"https://cdn.discordapp.com/emojis/{new_emote.id}.webp?size=96&quality=lossless"
-                    embed = discord.Embed(
-                        color=discord.Color.brand_green(),
-                        title="New emote",
-                        description=f"The emote `{emote_name}` was added to the server!"
-                    )
-                    embed.set_image(url=new_url)
+                    new_emote: discord.Emoji = await guild.create_custom_emoji(name=emote_name, image=image)
+                    new: str = await General.url(img_id=new_emote.id)
+
+                    # Embed response
+                    embed = Steal.success(new_emote.name)
+                    embed.set_image(url=new)
 
                     await interaction.response.send_message(embed=embed)
                     return
-
+            embed = Steal.missing(emote_name=target)
+            await interaction.response.send_message(embed=embed)
             return
 
     def event_commands(self):
