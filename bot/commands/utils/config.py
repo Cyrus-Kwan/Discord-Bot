@@ -27,10 +27,14 @@ class General():
         return embed
 
     @staticmethod
-    async def url(img_id:str):
-        url: str = f"https://cdn.discordapp.com/emojis/{img_id}.webp?size=96&quality=lossless"
-
-        return url
+    async def url(emote:str):
+        pattern: str = r"^<a:"
+        animated = re.search(pattern=pattern, string=emote)
+        id = Emote.id(emote=emote)
+        if animated:
+            return f"https://cdn.discordapp.com/emojis/{id}.gif?size=96&quality=lossless"
+        else:
+            return f"https://cdn.discordapp.com/emojis/{id}.webp?size=96&quality=lossless"
 
     @staticmethod
     async def recent_messages(model:Model, id:int, n:int=50):
@@ -80,12 +84,16 @@ class Steal():
         return embed
 
     @staticmethod
-    def success(emote=str):
+    async def success(emote:discord.Emoji):
+        name = Emote.name(emote)
         embed = discord.Embed(
             title="Steal",
-            description=f"SUCCESS | A new emote **`{emote}`** was successfully added to the server!",
+            description=f"SUCCESS | A new emote **`{name}`** was successfully added to the server!",
             color=discord.Color.brand_green()
         )
+
+        url = await General.url(emote=emote)
+        embed.set_thumbnail(url=url)
 
         return embed
 
