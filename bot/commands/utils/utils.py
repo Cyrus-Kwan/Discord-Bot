@@ -59,7 +59,7 @@ class Utils():
             await interaction.response.send_message(user_table)
 
         @self.tree.command(name="steal", description="Adds the most recently messaged emote to the server")
-        async def steal(interaction:discord.Interaction, target:str=None):
+        async def steal(interaction:discord.Interaction, search:str=None, rename:str=None):
             '''
             Adds the most recently sent emote in the channel to the server emotes.
             A user can target an emote by specifying the exact name.
@@ -74,12 +74,15 @@ class Utils():
             existing_emotes: dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
             
             for message in messages:
-                emote: str = Emote.extract(message=message, target=target)
+                emote: str = Emote.extract(message=message, target=search)
                 emote_name: str = Emote.name(emote=emote)
                 emote_id: str = Emote.id(emote=emote)
 
                 if not emote:
                     continue
+
+                if rename:
+                    emote_name:str = rename
 
                 if emote_name in existing_emotes:
                     duplicate: str = await guild.fetch_emoji(existing_emotes[emote_name])
@@ -89,20 +92,18 @@ class Utils():
                     return
                 else:
                     # Get the source image in byte code
-                    src: str = await General.url(img_id=emote_id)
+                    src: str = await General.url(emote=emote)
                     image: str = requests.get(src).content
 
                     # Add the new emote to the server
                     new_emote: discord.Emoji = await guild.create_custom_emoji(name=emote_name, image=image)
-                    new: str = await General.url(img_id=new_emote.id)
 
                     # Embed response
-                    embed = Steal.success(new_emote.name)
-                    embed.set_image(url=new)
+                    embed = await Steal.success(emote=str(new_emote))
 
                     await interaction.response.send_message(embed=embed)
                     return
-            embed = Steal.missing(emote_name=target)
+            embed = Steal.missing(emote_name=search)
             await interaction.response.send_message(embed=embed)
             return
 
