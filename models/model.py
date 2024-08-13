@@ -7,7 +7,7 @@ import asyncio
 import re
 
 # ENVIRONMENT::
-PYTHONPATH = Path(__file__).parents[1].__str__()
+PYTHONPATH = Path(__file__).parents[2].__str__()
 if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
@@ -20,7 +20,6 @@ class Model():
     def __init__(self, database:str):
         self.connection: sqlite3.Connection = self.database_connect(database)
         self.cursor: sqlite3.Connection.cursor = self.connection.cursor()
-        self.schema: dict[pd.DataFrame] = None
 
     @classmethod
     async def create(cls, database:str, script:str=None):
@@ -31,7 +30,6 @@ class Model():
         self = cls(database=database)
         if script:
             await self.inject(script)
-        self.schema = await self.get_schema()
 
         return self
 
@@ -129,8 +127,6 @@ class Model():
                 self.cursor.execute(query)
             self.connection.commit()
 
-        self.schema = await self.get_schema()
-
         return None
 
     async def inject(self, script:str) -> None:
@@ -148,15 +144,14 @@ class Model():
             for query in sql.split(";")[:-1]:
                 await self.write(query)
 
-        self.schema = await self.get_schema()
-
         return
 
     async def upsert(self, table:str, values:dict) -> None:
         '''
         Inserts a dictionary into the specified table
         '''
-        columns = self.schema[table].columns
+        schema = await self.get_schema()
+        columns = schema[table].columns
 
         primary_key: str = ", ".join(await self.primary_key(table=table))
         column_names: str = ", ".join(columns)
@@ -173,8 +168,11 @@ class Model():
 
 async def main():
     mod = await Model.create("main.db")
-    sql = """
-    SELECT * FROM messages;
+    sql = f"""
+    SELECT content 
+    FROM messages
+    WHERE channel_id = 1272532155641233439 
+    ORDER BY date_created DESC;
     """
     print(await mod.read(sql))
 

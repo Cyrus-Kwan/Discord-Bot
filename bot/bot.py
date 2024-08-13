@@ -32,7 +32,6 @@ class Client(discord.Client):
 
     async def on_ready(self) -> discord.Client:
         print(f"Logged in as: {self.user}")
-
         return self.user
 
     async def setup_hook(self) -> None:
@@ -80,7 +79,8 @@ class Client(discord.Client):
 async def get_token(client_name:str) -> str:
     # Access the database
     model = await Model.create("config.db")
-    config = model.schema["clients"]
+    schema = await model.get_schema()
+    config = schema["clients"]
 
     # Parameters to get the access token for the specified bot
     client_token = config[config["client_name"] == client_name]["access_token"]
