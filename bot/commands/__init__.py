@@ -7,4 +7,5 @@ if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
 # MODULES::
-from commands.utils import Utils
+from commands.utils.utils import Utils
+from commands.utils import config
