@@ -49,6 +49,7 @@ class Utils():
 
             await interaction.response.send_message(embed=embed)
             await self.client.close()
+            return
 
         @self.tree.command(name="users", description="Returns a table containing user details")
         async def users(interaction:discord.Interaction) -> None:
@@ -57,9 +58,10 @@ class Utils():
             user_table = await model.read(sql)
 
             await interaction.response.send_message(user_table)
+            return
 
         @self.tree.command(name="steal", description="Adds the most recently messaged emote to the server")
-        async def steal(interaction:discord.Interaction, search:str=None, rename:str=None):
+        async def steal(interaction:discord.Interaction, search:str=None, rename:str=None) -> None:
             '''
             Adds the most recently sent emote in the channel to the server emotes.
             A user can target an emote by specifying the exact name.
@@ -109,7 +111,7 @@ class Utils():
 
     def event_commands(self):
         @self.client.event
-        async def on_message(message:discord.Message):
+        async def on_message(message:discord.Message) -> None:
             if message.author.bot:
                 return
 
@@ -134,3 +136,4 @@ class Utils():
             }
 
             await self.client.model.upsert("messages", insert)
+            return
