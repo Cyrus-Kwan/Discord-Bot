@@ -1,12 +1,20 @@
 Nothing yet...
 
 TODO:
-> Steal emotes
+> ```
+> N-Gram chatbot
+> ```
 
 FEATURES:
+> ```
 > Anime suggestions
 > Kinfire delve dungeon
-> N-Gram chatbot
 > RNN chatbot
 > Where's Daniel?
 > Point system
+> ```
+
+DONE:
+> ```
+> Steal emotes
+> ```
