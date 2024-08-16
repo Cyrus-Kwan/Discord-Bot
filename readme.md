@@ -3,6 +3,7 @@ Nothing yet...
 TODO:
 > ```
 > N-Gram chatbot
+> Message filtering
 > ```
 
 FEATURES:
