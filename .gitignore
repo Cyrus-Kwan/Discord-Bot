@@ -4,3 +4,4 @@ models/__pycache__/
 bot/__pycache__/
 bot/commands/__pycache__/
 bot/commands/utils/__pycache__/
+bot/commands/chat/ngram/__pycache__/
