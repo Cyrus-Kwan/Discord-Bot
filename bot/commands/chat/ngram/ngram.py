@@ -1,65 +1,60 @@
-# N-Grams
-# -------------------------------------------------------------------------------
-'''
-A N-Gram is a type of stochastic process.
-A N-Gram is a collection of random variables where the future states only depend on the current state.
-N-Grams can be either discrete or continous.
-
-For a N-Gram transition matrix:
-- Each row must total to 1 (sum of probabilities of each transition)
-- The probabilities must be non-negative
-
-A N-Gram can be simulated from an initial distribution and transition matrix.
-In our case, the initial state is New york City. From the initial state we can travel to:
-    Paris, Cairo, Seoul or even within New York City.
-
-The transition matrix contains the one step transition probabilities of moving from state to state.
-'''
 import pandas as pd
 import numpy as np
-import random
-from words_graph import *
+import re
 
-def ngram(start:str, stop:str, matrix:pd.DataFrame, n:int=None):
+def words(string:str, n:int=1):
+    '''
+    Returns a list of all substrings where each substring is a sequence of n consecutive words.
+    '''
+    words: list[str] = string.split()
+    n_words: list[list] = []
+
+    for i in range(len(words)):
+        if len(words[i:i+n]) >= n:
+            n_words.append(words[i:i+n])
+
+    return n_words
+
+def graph(string:str, overlap:int=1):
+    n: int = overlap + 1
+    str_arr: list[list] = [" ".join(word) for word in words(string=string, n=n)]
+    word_arr: list[str] = words(string=string, n=n)
+    index: set[list] = set(str_arr)
+    matrix: dict[float] = {word:[0]*len(index) for word in index}
+    graph: pd.DataFrame = pd.DataFrame(matrix, index=matrix.keys())
+    ref: dict[dict] = {col:{} for col in graph}
+
+    for i, word in enumerate(word_arr):
+        curr = word_arr[i][:n-1]
+        prev = word_arr[i-1][1-n:]
+
+        if curr == prev:
+            row = " ".join(word_arr[i])
+            col = " ".join(word_arr[i-1])
+            graph.loc[row, col] += 1
+            ref[col][row] = graph.loc[row, col]
+
+    for col in ref.keys():
+        total = sum(graph[col])
+        for row, val in ref[col].items():
+            graph.loc[row, col] = val/total
+
+    return graph
+
+def generate(start:str, stop:str, matrix:pd.DataFrame, n:int):
+    chain: list[str] = []
     current: str = start
-    chain: list[str] = [start]
+    count: int = 0
 
-    if n:
-        for i in range(n):
-            word = poly_prob(matrix[current])
-            chain.append(word.split()[-1])
-            current = word
-    else:
-        while current != stop:
-            word = poly_prob(matrix[current])
-            chain.append(word.split()[-1])
-            current = word
-    
-    return chain
+    while (current != stop) or (count < n):
+        word = np.random.choice(matrix.index, p=matrix[current])
+        chain.append(word.split()[-1])
+        current = word
+        count += 1
 
-def poly_prob(series:pd.Series):
-    '''
-    Returns the respective index based on the non-uniform probability distribution of a given series.
-    '''
-    if round(sum(series), 0) != 1:
-        raise ValueError("The sum of probabilities must equal to 1.")
-    cumulative = 0
-    result = random.random()
-    for i, value in series.items():
-        cumulative += value
-        if result <= cumulative:
-            return i
+    return " ".join(chain)
 
 def main():
-    # transition_matrix = {
-    # "NYC": [0.25, 0, 0.75, 1],
-    # "Paris": [0.25, 0.25, 0, 0],
-    # "Cairo": [0.25, 0.25, 0.25, 0],
-    # "Seoul": [0.25, 0.5, 0, 0],
-    # }
-
-    # matrix_df = pd.DataFrame(data=transition_matrix, index=transition_matrix.keys())
-
     # text = """
     #     This is the house that Jack built. 
     #     This is the malt 
@@ -72,16 +67,22 @@ def main():
     #     That ate the malt 
     #     That lay in the house that Jack built. 
     # """
+    text = "The quick brown fox jumped over the lazy dog."
+    matrix = graph(string=text, overlap=1)
+    print(matrix.drop(columns=["lazy dog."]))
 
-    # matrix = graph(string=text, n=1)
     # print(matrix)
-    # generated = " ".join(ngram(start="That", stop="rat,", matrix=matrix, n=50))
-    # print(generated)
 
+    # with open("./the-velveteen-rabbit.txt") as file:
+    #     text = file.read()
+    #     matrix = graph(string=text, overlap=3)
+    #     matrix.to_csv("./tvr.csv", index_label="Word")
 
-    matrix = pd.read_csv("./geah.csv", index_col=0)
-    generated = " ".join(ngram(start="in a tree.", stop="Let me be!", matrix=matrix, n=50))
-    print(generated)
+    # matrix = pd.read_csv("./tvr.csv", index_col=0)
+    start = np.random.choice(matrix.columns)
+    stop = np.random.choice(matrix.index)
+    string = generate(start=start, stop=stop, matrix=matrix, n=50)
+    print(string)
 
     return
 
