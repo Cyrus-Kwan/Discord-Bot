@@ -3,6 +3,7 @@ Nothing yet...
 TODO:
 > ```
 > N-Gram chatbot
+> Current graph implementation has too high of a space complexity. Should modify to make it more space efficient.
 > Message filtering
 > ```
 
