@@ -1,7 +1,6 @@
 from pathlib import Path
 import sys
 import numpy as np
-import json
 import asyncio
 
 # ENVIRONMENT::
@@ -40,49 +39,55 @@ class Graph():
 
         return n_words
 
-    async def adj_graph(self, string:str, union:int=1):
+    async def add(self, string:str, union:int=1):
         '''
-        Returns adjacency list that contains only the relationships between each state and the next
+        Writes unique relationships to an SQL adjacency list
         '''
         n: int = union + 1
         slice_arr = await self.words(string=string, n=n)
         word_arr: list[str] = [" ".join(word) for word in slice_arr]
-        # slice_arr: list[str] = words(string=string)
 
-        graph: dict = {word:{} for word in word_arr}
-
-        for i in range(len(word_arr)):
-            prev_slice: list[str] = slice_arr[i-1][1-n:]
-            curr_slice: list[str] = slice_arr[i][:n-1]
-            curr: str = word_arr[i]
-            prev: str = word_arr[i-1]
+        for i, _ in enumerate(word_arr):
+            prev_slice:list[str] = slice_arr[i-1][1-n:]
+            curr_slice:list[str] = slice_arr[i][:n-1]
+            curr:str = word_arr[i]
+            prev:str = word_arr[i-1]
 
             if curr_slice == prev_slice:
-                values: dict = {
-                    "current":curr, 
-                    "previous":prev,
+                values:dict = {
+                    "Current":curr, 
+                    "Previous":prev,
+                    "Edge":1,
                     }
 
-                sql: str = """
-                INSERT INTO graph (current, previous, edge)
-                VALUES (:current, :previous, 0)
-                ON CONFLICT (current, previous) DO UPDATE SET
-                    edge = edge + 1;
+                sql:str = """
+                INSERT INTO Graph (Current, Previous, Edge)
+                VALUES (:Current, :Previous, :Edge)
+                ON CONFLICT (Current, Previous) DO UPDATE SET
+                    Edge = Edge + 1;
                 """
                 await self.model.write(query=sql, values=values)
 
-        # Try handling this functionality in sql
-            if prev in graph[curr].keys():
-                graph[curr][prev] += 1
-            else:
-                graph[curr][prev] = 1
+        for j, _ in enumerate(word_arr):
+            curr:str = word_arr[j]
+            prev:str = word_arr[j-1]
 
-        for curr in graph.keys():
-            total = sum(graph[curr].values())
-            for prev in graph[curr].keys():
-                graph[curr][prev] = graph[curr][prev]/total
+            if curr_slice == prev_slice:
+                values:dict = {
+                    "Current":curr,
+                    "Previous":prev,
+                }
 
-        return graph
+                sql:str = """
+                UPDATE Graph
+                SET Probability = 
+                    CAST(
+                        (SELECT Edge FROM Graph WHERE Current = :Current AND Previous = :Previous) AS REAL) /
+                        (SELECT SUM (Edge) FROM Graph WHERE Previous = :Previous)
+                WHERE Current = :Current AND Previous = :Previous;
+                """
+                await self.model.write(query=sql, values=values)
+        return
 
 async def main():
     text = """
@@ -97,12 +102,22 @@ async def main():
         That ate the malt 
         That lay in the house that Jack built. 
     """
+    from datetime import datetime
 
+    start = datetime.now()
+    # with open(file="./the-velveteen-rabbit.txt", mode="r") as file:
+        # text = file.read()
     graph = await Graph.create()
-    await graph.adj_graph(string=text, union=1)
+    await graph.add(string=text, union=1)
 
-    sql = "SELECT * FROM graph;"
+    stop = datetime.now() - start
+    print(stop)
 
+    # sql = """
+    # SELECT
+    #     CAST ((SELECT Edge FROM Graph WHERE Current = 'the rat,' AND Previous = 'is the') AS REAL)/
+    #     (SELECT SUM(Edge) FROM Graph WHERE Previous = 'is the') AS ratio;"""
+    sql = "SELECT * FROM Graph;"
     print(await graph.model.read(sql))
 
     return
