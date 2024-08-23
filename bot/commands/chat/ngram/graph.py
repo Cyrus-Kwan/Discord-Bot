@@ -69,6 +69,8 @@ class Graph():
                 await self.model.write(query=sql, values=values)
 
         for j, _ in enumerate(word_arr):
+            prev_slice:list[str] = slice_arr[i-1][1-n:]
+            curr_slice:list[str] = slice_arr[i][:n-1]
             curr:str = word_arr[j]
             prev:str = word_arr[j-1]
 
