@@ -77,7 +77,7 @@ class Model():
         return pragma[pragma["pk"] == 1]["name"]
 
     # Database Operations::
-    async def read(self, query:str) -> pd.DataFrame:
+    async def read(self, query:str, values:dict=None) -> pd.DataFrame:
         '''
         Returns an SQL query as a pandas DataFrame object for simpler indexing.
         Ensures only SELECT queries are allowed and guards against SQL injection.
@@ -95,11 +95,18 @@ class Model():
 
         with self.connection:
             columns:list[str] = []
-            for value in self.cursor.execute(query).description:
-                columns.append(value[0])
+            if values:
+                for value in self.cursor.execute(query, values).description:
+                    columns.append(value[0])
 
-            sql:str = pd.read_sql_query(query, self.connection)
-            select = pd.DataFrame(sql, columns=columns)
+                sql:str = pd.read_sql_query(sql=query, con=self.connection, params=values)
+                select = pd.DataFrame(sql, columns=columns)
+            else:
+                for value in self.cursor.execute(query).description:
+                    columns.append(value[0])
+
+                sql:str = pd.read_sql_query(sql=query, con=self.connection)
+                select = pd.DataFrame(sql, columns=columns)
 
         return select
 
@@ -190,10 +197,17 @@ async def main():
     sql = """
     SELECT * FROM Graph;
     """
-    await mod.write("INSERT INTO Graph (Current, Previous, Edge) VALUES ('a b', 'c d', 1);")
-    await mod.write("INSERT INTO Graph (Current, Previous, Edge) VALUES ('a b', 'e f', 1);")
 
     print(await mod.read(sql))
+    # sql = """
+    # SELECT Edge / (
+    #     SELECT SUM(Edge) FROM Graph
+    #     WHERE Current = 'a b'
+    # )
+    # FROM Graph
+    # WHERE Previous = 'e f';
+    # """
+    # print(await mod.read(sql))
 
 if __name__ == "__main__":
     asyncio.run(main())
