@@ -1,8 +1,9 @@
-from pathlib import Path
 import sys
 import re
 import asyncio
 import numpy as np
+from discord import Client
+from pathlib import Path
 
 # ENVIRONMENT::
 PYTHONPATH = Path(__file__).parents[4].__str__()
@@ -59,6 +60,7 @@ async def main():
     ngram = NGram(model=mod)
     gen = await ngram.generate(start="There was once", stop="to be Real.")
     print(await ngram.short(gen))
+    # print(gen)
     return
 
 if __name__ == "__main__":
