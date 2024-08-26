@@ -3,8 +3,9 @@ Nothing yet...
 TODO:
 > ```
 > N-Gram chatbot
-> Current graph implementation has too high of a space complexity. Should modify to make it more space efficient.
 > Message filtering
+> Refactor steal command as context menu
+> Might move on_message recording to exclusively chat command
 > ```
 
 FEATURES:
@@ -19,4 +20,5 @@ FEATURES:
 DONE:
 > ```
 > Steal emotes
+> Current graph implementation has too high of a space complexity. Should modify to make it more space efficient.
 > ```
