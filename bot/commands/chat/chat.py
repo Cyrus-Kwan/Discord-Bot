@@ -1,5 +1,6 @@
 import discord
 import sys
+import numpy as np
 from discord import Client
 from pathlib import Path
 
@@ -42,9 +43,15 @@ class Chat():
     def slash_commands(self):
         @self.tree.command(name="chat", description="Sends a generated message into the same channel the method was called.")
         async def chat(interaction:discord.Interaction) -> None:
-            gen_str:str = await self.ngram.generate()   # Define some start and stop string
+            sql:str = """
+            SELECT Current, Previous FROM Graph
+            """
+            fetch = await self.model.read(query=sql)
+            start = np.random.choice(fetch["Current"])
+            stop = np.random.choice(fetch["Previous"])
+            gen_str:str = await self.ngram.generate(start=start, stop=stop)
             short_str:str = await self.ngram.short(string=gen_str)
-            await interaction.response.send_message(short)
+            await interaction.response.send_message(short_str)
             return
 
     def event_commands(self):
