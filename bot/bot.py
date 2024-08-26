@@ -45,6 +45,7 @@ class Client(discord.Client):
 
         # Register commands here
         await Utils.register(self)
+        await Chat.register(self)
 
         # Sync the application commands with the server
         await self.tree.sync()
