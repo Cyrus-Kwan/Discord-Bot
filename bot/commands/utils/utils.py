@@ -109,6 +109,19 @@ class Utils():
             await interaction.response.send_message(embed=embed)
             return
 
+        @self.tree.context_menu(name="copy")
+        async def copy(interaction:discord.Interaction, message:discord.Message):
+            '''
+            Directly add a sole emote from a message
+            '''
+            content:str = message.content
+            emote:str = Emote.extract(message=content)
+            emote_name: str = Emote.name(emote=emote)
+            emote_id: str = Emote.id(emote=emote)
+
+            await interaction.response.send_message(content)
+            return
+
     def event_commands(self):
         @self.client.event
         async def on_message(message:discord.Message) -> None:
