@@ -30,11 +30,11 @@ class General():
     async def url(emote:str):
         pattern: str = r"^<a:"
         animated = re.search(pattern=pattern, string=emote)
-        id = Emote.id(emote=emote)
+        code = Emote.code(emote=emote)
         if animated:
-            return f"https://cdn.discordapp.com/emojis/{id}.gif?size=96&quality=lossless"
+            return f"https://cdn.discordapp.com/emojis/{code}.gif?size=96&quality=lossless"
         else:
-            return f"https://cdn.discordapp.com/emojis/{id}.webp?size=96&quality=lossless"
+            return f"https://cdn.discordapp.com/emojis/{code}.webp?size=96&quality=lossless"
 
     @staticmethod
     async def recent_messages(model:Model, id:int, n:int=50):
@@ -48,6 +48,13 @@ class General():
         messages: pd.DataFrame = await model.read(sql)
 
         return messages["content"]
+
+    @staticmethod
+    async def table(data:pd.DataFrame):
+        '''
+        Returns formatted embed for a pandas dataframe
+        '''
+        return
 
 class Steal():
     color_map = {
@@ -66,7 +73,7 @@ class Steal():
         return embed
 
     @staticmethod
-    def missing(emote_name:str=None):
+    async def missing(emote_name:str=None):
         embed = None
         if emote_name:
             embed = discord.Embed(
@@ -109,7 +116,7 @@ class Emote():
         return result.group() if result else None
 
     @staticmethod
-    def id(emote:str) -> str:
+    def code(emote:str) -> str:
         if not emote:
             return
 
@@ -119,14 +126,14 @@ class Emote():
         return result.group() if result else None
 
     @staticmethod
-    def extract(message:str, target:str=None) -> str:
+    def extract(message:str, search:str=None) -> str:
         result: str = None
 
         emote_pattern: str = r"<a?:[a-zA-Z0-9_~]+:[0-9]+>"
-        target_pattern: str = f"<a?:{target}:[0-9]+>"
+        search_pattern: str = f"<a?:{search}:[0-9]+>"
 
-        if target:
-            result: str = re.search(pattern=target_pattern, string=message)
+        if search:
+            result: str = re.search(pattern=search_pattern, string=message)
         else:
             result:str  = re.search(pattern=emote_pattern, string=message)
 
