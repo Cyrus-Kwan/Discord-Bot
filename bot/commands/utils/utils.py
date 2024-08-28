@@ -41,6 +41,35 @@ class Utils():
 
         return self
 
+    async def steal(self, message:str, interaction:discord.Interaction, search:str=None, rename:str=None):
+        message:str = message
+        emote:str = Emote.extract(message=message, search=search)
+        name:str = rename if rename else Emote.name(emote=emote)
+        code:str = Emote.code(emote=emote)
+        guild:discord.Guild = interaction.guild
+        existing_emotes:dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
+
+        if not emote:
+            return
+
+        if name in existing_emotes:
+            duplicate: str = await guild.fetch_emoji(existing_emotes[name])
+            embed: discord.Embed = Steal.duplicate(emote_name=duplicate)
+
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        if (search == None) or (search == Emote.name(emote=emote)):
+            # Get the source image in byte code
+            src: str = await General.url(emote=emote)
+            image: str = requests.get(src).content
+
+            # Add the new emote to the server
+            new_emote:discord.Emoji = await guild.create_custom_emoji(name=name, image=image)
+            return new_emote
+            
+        return
+
     # COMMANDS::
     def slash_commands(self):
         @self.tree.command(name="shutdown", description="Closes the client instance")
@@ -49,6 +78,7 @@ class Utils():
 
             await interaction.response.send_message(embed=embed)
             await self.client.close()
+
             return
 
         @self.tree.command(name="users", description="Returns a table containing user details")
@@ -58,69 +88,57 @@ class Utils():
             user_table = await model.read(sql)
 
             await interaction.response.send_message(user_table)
+
             return
 
         @self.tree.command(name="steal", description="Adds the most recently messaged emote to the server")
-        async def steal(interaction:discord.Interaction, search:str=None, rename:str=None) -> None:
+        async def steal_history(interaction:discord.Interaction, search:str=None, rename:str=None) -> None:
             '''
             Adds the most recently sent emote in the channel to the server emotes.
             A user can target an emote by specifying the exact name.
             '''
             # Get the most recent messages
-            messages: pd.Series = await General.recent_messages(
+            messages:pd.Series = await General.recent_messages(
                 model=self.client.model, 
                 id=interaction.channel_id
                 )
-
-            guild: discord.Guild = interaction.guild
-            existing_emotes: dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
             
+            # Loop through n previous messages until a new emote has been added
             for message in messages:
-                emote: str = Emote.extract(message=message, target=search)
-                emote_name: str = Emote.name(emote=emote)
-                emote_id: str = Emote.id(emote=emote)
-
-                if not emote:
-                    continue
-
-                if rename:
-                    emote_name:str = rename
-
-                if emote_name in existing_emotes:
-                    duplicate: str = await guild.fetch_emoji(existing_emotes[emote_name])
-                    embed: discord.Embed = Steal.duplicate(emote_name=duplicate)
-
-                    await interaction.response.send_message(embed=embed)
-                    return
-                else:
-                    # Get the source image in byte code
-                    src: str = await General.url(emote=emote)
-                    image: str = requests.get(src).content
-
-                    # Add the new emote to the server
-                    new_emote: discord.Emoji = await guild.create_custom_emoji(name=emote_name, image=image)
-
-                    # Embed response
+                new_emote = await self.steal(
+                    message=message, interaction=interaction, search=search, rename=rename
+                )
+                if new_emote:
+                    # Return success embed when a new emote is added
                     embed = await Steal.success(emote=str(new_emote))
-
                     await interaction.response.send_message(embed=embed)
                     return
-            embed = Steal.missing(emote_name=search)
+
+            # Return missing embed if the emote was not found
+            embed = await Steal.missing(emote_name=search)
             await interaction.response.send_message(embed=embed)
+
             return
 
-        @self.tree.context_menu(name="copy")
-        async def copy(interaction:discord.Interaction, message:discord.Message):
+        @self.tree.context_menu(name="steal")
+        async def steal_message(interaction:discord.Interaction, message:discord.Message):
             '''
             Directly add a sole emote from a message
             '''
-            content:str = message.content
-            emote:str = Emote.extract(message=content)
-            emote_name: str = Emote.name(emote=emote)
-            emote_id: str = Emote.id(emote=emote)
+            new_emote = await self.steal(
+                message=message.content, interaction=interaction
+            )
+            if new_emote:
+                # Return success embed when a new emote is added
+                embed = await Steal.success(emote=str(new_emote))
+                await interaction.response.send_message(embed=embed)
+            else:
+                # Return missing embed if the emote was not found
+                embed = await Steal.missing()
+                await interaction.response.send_message(embed=embed)
 
-            await interaction.response.send_message(content)
             return
+
 
     def event_commands(self):
         @self.client.event
