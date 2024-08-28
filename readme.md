@@ -4,8 +4,6 @@ TODO:
 > ```
 > N-Gram chatbot
 > Message filtering
-> Refactor steal command as context menu
-> Might move on_message recording to exclusively chat command
 > ```
 
 FEATURES:
@@ -21,4 +19,6 @@ DONE:
 > ```
 > Steal emotes
 > Current graph implementation has too high of a space complexity. Should modify to make it more space efficient.
+> Refactor steal command as context menu
+> Might move on_message recording to exclusively chat command (scrapped for extra features in steal method)
 > ```
