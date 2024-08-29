@@ -56,8 +56,22 @@ class Chat():
 
     def event_commands(self):
         @self.client.event
-        async def on_mention(message:discord.Message) -> None:
-            gen_str:str = await self.ngram.generate()   # Define some start and stop string
+        async def on_message(message:discord.Message) -> None:
+            if message.author == self.client.user:
+                return
+
+            if self.client.user not in message.mentions:
+                return
+
+            sql:str = """
+            SELECT Current, Previous FROM Graph
+            """
+            fetch = await self.model.read(query=sql)
+            splits = message.content.split()
+            start = np.random.choice(fetch["Current"])
+            stop = np.random.choice(fetch["Previous"])
+
+            gen_str:str = await self.ngram.generate(start=start, stop=stop)
             short_str:str = await self.ngram.short(string=gen_str)
-            await interaction.response.send_message(short)
+            await message.channel.send(short_str)
             return
