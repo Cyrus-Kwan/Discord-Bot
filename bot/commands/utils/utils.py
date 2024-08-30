@@ -41,35 +41,6 @@ class Utils():
 
         return self
 
-    async def steal(self, message:str, interaction:discord.Interaction, search:str=None, rename:str=None):
-        message:str = message
-        emote:str = Emote.extract(message=message, search=search)
-        name:str = rename if rename else Emote.name(emote=emote)
-        code:str = Emote.code(emote=emote)
-        guild:discord.Guild = interaction.guild
-        existing_emotes:dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
-
-        if not emote:
-            return
-
-        if name in existing_emotes:
-            duplicate: str = await guild.fetch_emoji(existing_emotes[name])
-            embed: discord.Embed = Steal.duplicate(emote_name=duplicate)
-
-            await interaction.response.send_message(embed=embed)
-            return
-        
-        if (search == None) or (search == Emote.name(emote=emote)):
-            # Get the source image in byte code
-            src: str = await General.url(emote=emote)
-            image: str = requests.get(src).content
-
-            # Add the new emote to the server
-            new_emote:discord.Emoji = await guild.create_custom_emoji(name=name, image=image)
-            return new_emote
-            
-        return
-
     # COMMANDS::
     def slash_commands(self):
         @self.tree.command(name="shutdown", description="Closes the client instance")
@@ -168,3 +139,32 @@ class Utils():
 
             await self.client.model.upsert("messages", insert)
             return
+
+    async def steal(self, message:str, interaction:discord.Interaction, search:str=None, rename:str=None):
+        message:str = message
+        emote:str = Emote.extract(message=message, search=search)
+        name:str = rename if rename else Emote.name(emote=emote)
+        code:str = Emote.code(emote=emote)
+        guild:discord.Guild = interaction.guild
+        existing_emotes:dict[int] = {emoji.name:emoji.id for emoji in guild.emojis}
+
+        if not emote:
+            return
+
+        if name in existing_emotes:
+            duplicate: str = await guild.fetch_emoji(existing_emotes[name])
+            embed: discord.Embed = Steal.duplicate(emote_name=duplicate)
+
+            await interaction.response.send_message(embed=embed)
+            return
+        
+        if (search == None) or (search == Emote.name(emote=emote)):
+            # Get the source image in byte code
+            src: str = await General.url(emote=emote)
+            image: str = requests.get(src).content
+
+            # Add the new emote to the server
+            new_emote:discord.Emoji = await guild.create_custom_emoji(name=name, image=image)
+            return new_emote
+
+        return
