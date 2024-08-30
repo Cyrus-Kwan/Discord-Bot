@@ -55,8 +55,8 @@ class Chat():
             return
 
     def event_commands(self):
-        @self.client.event
-        async def on_message(message:discord.Message) -> None:
+        @self.on_message
+        async def on_mention(message:discord.Message) -> None:
             if message.author == self.client.user:
                 return
 
@@ -75,3 +75,12 @@ class Chat():
             short_str:str = await self.ngram.short(string=gen_str)
             await message.channel.send(short_str)
             return
+
+    def on_message(self, func):
+        '''
+        Decorator for commands that run on message token
+        '''
+        def wrapper():
+            func()
+        
+        return wrapper
