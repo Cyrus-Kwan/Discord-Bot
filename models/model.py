@@ -193,12 +193,12 @@ class Model():
         return result
 
 async def main():
-    mod = await Model.create("ngram.db", "ngram.sql")
+    mod = await Model.create("main.db", "ngram.sql")
     sql = """
     SELECT * FROM Graph;
     """
 
-    print(await mod.read(sql))
+    print(await mod.get_schema())
     # sql = """
     # SELECT Edge / (
     #     SELECT SUM(Edge) FROM Graph

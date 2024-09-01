@@ -6,3 +6,4 @@ bot/commands/__pycache__/
 bot/commands/utils/__pycache__/
 bot/commands/chat/ngram/__pycache__/
 bot/commands/chat/__pycache__/
+bot/commands/chat/ngram/4chan.txt

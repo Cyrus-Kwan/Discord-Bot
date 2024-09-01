@@ -1,10 +1,10 @@
 from pathlib import Path
 import sys
-import numpy as np
-import asyncio
+# import numpy as np
+# import asyncio
 
 # ENVIRONMENT::
-PYTHONPATH = Path(__file__).parents[4].__str__()
+PYTHONPATH = Path(__file__).parents[1].__str__()
 if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
@@ -17,10 +17,10 @@ class Graph():
         self.model: Model = None
     
     @classmethod
-    async def create(cls):
+    async def create(cls, database:str, script:str):
         self = cls()
         # Change ngram.db to main.db once feature is ready
-        self.model = await Model.create(database="ngram.db", script="ngram.sql")
+        self.model = await Model.create(database=database, script=script)
 
         return self
 
@@ -47,6 +47,7 @@ class Graph():
         slice_arr = await self.words(string=string, n=n)
         word_arr: list[str] = [" ".join(word) for word in slice_arr]
 
+        # Insert or update new entries as new or unique and increments the edge
         for i, _ in enumerate(word_arr):
             prev_slice:list[str] = slice_arr[i-1][1-n:]
             curr_slice:list[str] = slice_arr[i][:n-1]
@@ -68,6 +69,7 @@ class Graph():
                 """
                 await self.model.write(query=sql, values=values)
 
+        # For each inserted or updated word, recalculate the probability
         for j, _ in enumerate(word_arr):
             prev_slice:list[str] = slice_arr[i-1][1-n:]
             curr_slice:list[str] = slice_arr[i][:n-1]
@@ -92,36 +94,12 @@ class Graph():
         return
 
 async def main():
-    text = """
-        This is the house that Jack built. 
-        This is the malt 
-        That lay in the house that Jack built. 
-        This is the rat, 
-        That ate the malt 
-        That lay in the house that Jack built. 
-        This is the cat 
-        That killed the rat, 
-        That ate the malt 
-        That lay in the house that Jack built. 
-    """
-    from datetime import datetime
-
-    start = datetime.now()
-    # with open(file="./the-velveteen-rabbit.txt", mode="r") as file:
-        # text = file.read()
-    graph = await Graph.create()
-    await graph.add(string=text, union=1)
-
-    stop = datetime.now() - start
-    print(stop)
-
-    # sql = """
-    # SELECT
-    #     CAST ((SELECT Edge FROM Graph WHERE Current = 'the rat,' AND Previous = 'is the') AS REAL)/
-    #     (SELECT SUM(Edge) FROM Graph WHERE Previous = 'is the') AS ratio;"""
-    sql = "SELECT * FROM Graph;"
-    print(await graph.model.read(sql))
-
+    with open(file="the-velveteen-rabbit.txt") as file:
+        text = file.read()
+        graph = await Graph.create(database="main.db", script="ngram.sql")
+        await graph.add(string=text, union=2)
+        # sql = "SELECT * FROM Graph"
+        # print(await graph.model.read(query=sql))
     return
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-DROP TABLE IF EXISTS Graph;
-
 --Table that stores substring states as an adjacency list
 CREATE TABLE IF NOT EXISTS Graph (
     Current TEXT,

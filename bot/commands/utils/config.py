@@ -8,7 +8,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-PYTHONPATH = Path(__file__).parents[3].__str__()
+PYTHONPATH = Path(__file__).parents[1].__str__()
 if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
@@ -102,6 +102,18 @@ class Steal():
         url = await General.url(emote=emote)
         embed.set_thumbnail(url=url)
 
+        return embed
+
+    async def menu(message:discord.Message):
+        '''
+        WIP::
+        Ephemeral dropdown of emotes in the message
+        Should have confirm selection button and cancel button
+        '''
+        embed = discord.Embed(
+            color=discord.Color.brand_red(), 
+            description="Choose from the following emotes."
+        )
         return embed
 
 class Emote():

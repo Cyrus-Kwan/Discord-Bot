@@ -62,6 +62,13 @@ class Utils():
 
             return
 
+        # Template for user installed commands
+        @app_commands.allowed_installs(guilds=True, users=True)
+        @app_commands.allowed_contexts(guilds=True, dms=True, private_channels=True)
+        @self.tree.context_menu(name="echo")
+        async def echo(interaction:discord.Interaction, message:discord.Message):
+            await interaction.response.send_message(message.content)
+
         @self.tree.command(name="steal", description="Adds the most recently messaged emote to the server")
         async def steal_history(interaction:discord.Interaction, search:str=None, rename:str=None) -> None:
             '''

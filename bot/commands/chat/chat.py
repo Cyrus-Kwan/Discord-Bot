@@ -5,7 +5,7 @@ from discord import Client
 from pathlib import Path
 
 # ENVIRONMENT::
-PYTHONPATH = Path(__file__).parents[1].__str__()
+PYTHONPATH = Path(__file__).parents[4].__str__()
 if PYTHONPATH not in sys.path:
     sys.path.append(PYTHONPATH)
 
