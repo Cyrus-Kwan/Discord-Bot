@@ -2,7 +2,7 @@
 import sys
 import pathlib
 
-PARENTPATH = "Discord Bot 3.0"
+PARENTPATH = "Discord Bot"
 PYTHONPATH = pathlib.Path(__file__)
 
 # Iterate through the parents of the current file path
@@ -15,7 +15,6 @@ for path in PYTHONPATH.parents:
     else:
         break
 
-from Config import config
 from Libs.models import *
 
 class Model:
@@ -49,7 +48,7 @@ class Model:
         database:str = curr_dir / data_dir / db_name
 
         con:Connection = sqlite3.connect(database=database)
-        return conn
+        return con
 
 async def main():
     model = Model("test.db")
