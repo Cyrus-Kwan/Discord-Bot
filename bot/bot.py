@@ -1,98 +1,39 @@
-# PACKAGES::
-import discord
-from discord import app_commands
-import pandas as pd
-import asyncio
-import sqlite3
-import re
-
-# ENVIRONMENT::
+# ENVIRONMENT SETUP::
 import sys
-from pathlib import Path
+import pathlib
 
-PYTHONPATH = Path(__file__).parents[1].__str__()
-if PYTHONPATH not in sys.path:
-    sys.path.append(PYTHONPATH)
+PARENTPATH = "Discord Bot"
+PYTHONPATH = pathlib.Path(__file__)
 
-# MODULES::
-from models.model import Model
-import models.scripts as scripts
-from commands import *
+# Iterate through the parents of the current file path
+for path in PYTHONPATH.parents:
+    curr_path = str(path)
+    # Check if the parent directory name is in the current path
+    if PARENTPATH in curr_path:
+        if curr_path not in sys.path:
+            sys.path.append(curr_path)
+    else:
+        break
+
+from Libs.bot import *
 
 class Client(discord.Client):
-    # CONSTRUCTOR::
     def __init__(self, intents:discord.Intents):
         super().__init__(intents=intents)
 
-        # Class attributes for command interaction
-        self.model: Model = None
-            
-        # App and slash command support
-        self.tree: app_commands.CommandTree = app_commands.CommandTree(self)
+        # Data storage for bot tokens and server resources
+        self.model:Model = None
 
-    async def on_ready(self) -> discord.Client:
-        print(f"Logged in as: {self.user}")
-        return self.user
+        # Represents a container that holds application command information
+        self.tree:CommandTree = CommandTree(self)
 
-    async def setup_hook(self) -> None:
-        '''
-        Coroutine called to setup the bot.
-        Asynchronously registers the specified commands from ".commands/"
-        '''
-        # Create main database on startup and necessary tables
-        self.model = await Model.create(database="main.db", script="users.sql")
-        await self.upsert_users()
+    async def on_ready(self):
+        print(f"Logged in as {self.user}")
+        return
 
-        # Register commands here
-        await Utils.register(self)
-        await Chat.register(self)
-
-        # Sync the application commands with the server
-        await self.tree.sync()
-
-    # USER UTILITIES::
-    async def upsert_users(self) -> None:
-        '''
-        Calls an upsert on the users table for all users
-        '''
-        for user in self.users:
-            if user.bot:
-                continue
-            
-            target = await self.user_table(user=user)
-            await self.model.upsert(table="users", values=target)
-
-    async def user_table(self, user:discord.User) -> dict:
-        '''
-        Method returns a dictionary of all non-callable attributes in a User object.
-        '''
-        user_table: dict = {}
-        pattern: str = r"^[^_].*[^_]$"
-        public = lambda attr: re.search(pattern=pattern, string=attr)
-        method = lambda attr: callable(getattr(user, attr))
-
-        for attribute in user.__dir__():
-            if public(attribute) and not method(attribute):
-                user_table[attribute] = getattr(user, attribute)
-
-        return user_table
-
-async def get_token(client_name:str) -> str:
-    # Access the database
-    model = await Model.create("config.db")
-    schema = await model.get_schema()
-    config = schema["clients"]
-
-    # Parameters to get the access token for the specified bot
-    client_token = config[config["client_name"] == client_name]["access_token"]
-
-    return client_token[0]
+    async def setup_hook(self):
+        return
 
 if __name__ == "__main__":
-    # Bot configuration
     intents = discord.Intents.all()
     client = Client(intents=intents)
-    token = asyncio.run(get_token(client_name="cmd#7080"))
-
-    # Run the bot using private access token
-    client.run(token)
