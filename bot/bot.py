@@ -32,8 +32,11 @@ class Client(discord.Client):
         return
 
     async def setup_hook(self):
+        await Interface.register(client=self)
         return
-
+    
 if __name__ == "__main__":
+    token = config.load("tokens.json")["bot"]
     intents = discord.Intents.all()
     client = Client(intents=intents)
+    client.run(token=token)
