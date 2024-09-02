@@ -43,12 +43,12 @@ class Interface:
 
     def slash_commands(self):
         @app_commands.allowed_installs(
-            guilds=shutdown["installs"]["guilds"],
-            users=shutdown["installs"]["users"]
+            guilds=Shutdown.installs["guilds"],
+            users=Shutdown.installs["users"]
         )
         @self.tree.command(
-            name=shutdown["name"],
-            description=shutdown["description"]
+            name=Shutdown.name,
+            description=Shutdown.description
         )
         async def shutdown(interaction:Interaction):
             '''
