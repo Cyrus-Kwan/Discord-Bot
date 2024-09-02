@@ -19,3 +19,4 @@ import Libs.bot
 import Libs.tests
 import Libs.models
 import Libs.config
+import Libs.commands
