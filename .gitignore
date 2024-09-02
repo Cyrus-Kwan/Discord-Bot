@@ -1,5 +1,2 @@
-\Libs\__pycache__
-\Libs\bot\__pycache__
-\Libs\tests\__pycache__
-\Libs\models\__pycache__
-\Libs\config\__pycache__
+__pycache__/
+Config/tokens.json
