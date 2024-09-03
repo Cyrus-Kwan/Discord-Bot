@@ -21,7 +21,9 @@ class Interface:
     def __init__(self, client:Client):
         self.client:Client = client
         self.tree:CommandTree = client.tree
-        self.admin:str = config.load("tokens.json")["admin"]
+
+        self.permissions = Permission()
+        self.shutdown = Shutdown(file=__file__)
 
     @classmethod
     async def register(cls, client:Client):
@@ -42,13 +44,21 @@ class Interface:
         return
 
     def slash_commands(self):
+        @app_commands.check(
+            self.permissions.admin
+        )
         @app_commands.allowed_installs(
-            guilds=Shutdown.installs["guilds"],
-            users=Shutdown.installs["users"]
+            guilds=self.shutdown.installs["guilds"],
+            users=self.shutdown.installs["users"]
+        )
+        @app_commands.allowed_contexts(
+            dms=self.shutdown.contexts["dms"],
+            guilds=self.shutdown.contexts["guilds"],
+            private_channels=self.shutdown.contexts["private_channels"]
         )
         @self.tree.command(
-            name=Shutdown.name,
-            description=Shutdown.description
+            name=self.shutdown.name,
+            description=self.shutdown.description
         )
         async def shutdown(interaction:Interaction):
             '''
@@ -56,8 +66,21 @@ class Interface:
             Responds with an ephemeral embed notification
             This command should only be callable by an administrator
             '''
+            try:
+                embed:Embed = self.shutdown.response(
+                    status="pass"
+                )
+            except Exception:
+                embed:Embed = self.shutdown.response(
+                    status="fail"
+                )
+
+            await interaction.response.send_message(
+                embed=embed, ephemeral=self.shutdown.ephemeral
+            )
             await self.client.close()
             return
+
         return
 
     def event_commands(self):
