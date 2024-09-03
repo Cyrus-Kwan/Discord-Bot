@@ -1,0 +1,9 @@
+{
+    "shutdown":{
+        "name":"shutdown",
+        "description":"Exits current runtime of bot client",
+        "installs":{"guilds":true,"users":true},
+        "close":{},
+        "error":{}
+    }
+}
