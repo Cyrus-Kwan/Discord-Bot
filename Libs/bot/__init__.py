@@ -3,6 +3,7 @@ print("Importing bot dependencies...")
 # Packages
 import asyncio
 import discord
+from discord import Embed
 from discord import Intents
 from discord import Message
 from discord import Interaction
