@@ -17,19 +17,36 @@ for path in PYTHONPATH.parents:
 
 from Libs.commands.interface import *
 
-colour:dict = config.load("colours.json")
+'''
+Embed constructors for application commands in interface.py
+'''
+colour:dict = {
+    key:int(value, base=16) for key, value in config.load("colours.json").items()
+}
 
 class Shutdown:
     def __init__(self, file:str):
-        config = config.load(file)["shutdown"]
-        self.name = config["name"]
-        self.close = config["close"]
-        self.error = config["error"]
-        self.installs = config["installs"]
-        self.description = config["description"]
+        const = config.load(path=file)["shutdown"]
+        self.name = const["name"]
+        self.embed = const["embed"]
+        self.installs = const["installs"]
+        self.contexts = const["contexts"]
+        self.ephemeral = const["ephemeral"]
+        self.description = const["description"]
 
-    def pass_embed(self):
-        return
+    def response(self, status:str):
+        const:dict = self.embed[status]
 
-    def fail_embed(self):
-        return
+        embed = Embed(
+            title=const["title"],
+            description=const["description"],
+            colour=colour[const["colour"]]
+        )
+        return embed
+
+def main():
+    print(colour)
+    return
+
+if __name__ == "__main__":
+    main()
