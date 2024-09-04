@@ -2,8 +2,27 @@
     "shutdown":{
         "name":"shutdown",
         "description":"Exits current runtime of bot client",
-        "installs":{"guilds":true,"users":true},
-        "close":{},
-        "error":{}
+        "ephemeral":true,
+        "installs":{
+            "guilds":true,
+            "users":true
+        },
+        "contexts":{
+            "guilds":true,
+            "dms":true,
+            "private_channels":true
+        },
+        "embed":{
+            "pass":{
+                "title":":white_check_mark: Shutdown Successful",
+                "description":"Feeling sleepy...",
+                "colour":"green"
+            },
+            "fail":{
+                "title":":warning: Shutdown Failed",
+                "description":"You do not have permission to shut down the bot.",
+                "colour":"red"
+            }
+        }
     }
 }
