@@ -27,16 +27,21 @@ class Client(discord.Client):
         # Represents a container that holds application command information
         self.tree:CommandTree = CommandTree(self)
 
-    async def on_ready(self):
-        print(f"Logged in as {self.user}")
-        return
+        # Decorators for application commands to call when the given event occurs
+        self.trigger:Trigger = Trigger(client=self)
 
     async def setup_hook(self):
         await Interface.register(client=self)
+
+        await self.tree.sync()
         return
     
-if __name__ == "__main__":
+def main():
     token = config.load("tokens.json")["bot"]
     intents = discord.Intents.all()
     client = Client(intents=intents)
     client.run(token=token)
+    return
+
+if __name__ == "__main__":
+    main()
