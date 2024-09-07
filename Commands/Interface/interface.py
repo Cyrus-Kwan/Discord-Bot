@@ -19,11 +19,20 @@ from Libs.commands.interface import *
 
 class Interface:
     def __init__(self, client:Client):
+        # Client command linking
         self.client:Client = client
         self.tree:CommandTree = client.tree
+        self.trigger:Trigger = client.trigger
 
+        # Command constants
         self.permissions = Permission()
-        self.shutdown = Shutdown(file=__file__)
+        self.start = InterfaceEmbed(
+            file=__file__, name="start"
+        ).command_config
+
+        self.shutdown = InterfaceEmbed(
+            file=__file__, name="shutdown"
+        ).command_config
 
     @classmethod
     async def register(cls, client:Client):
@@ -37,6 +46,7 @@ class Interface:
         self.menu_commands()
         self.slash_commands()
         self.event_commands()
+        self.trigger.register()
 
         return self
 
@@ -48,17 +58,17 @@ class Interface:
             self.permissions.admin
         )
         @app_commands.allowed_installs(
-            guilds=self.shutdown.installs["guilds"],
-            users=self.shutdown.installs["users"]
+            guilds=self.shutdown["installs"]["guilds"],
+            users=self.shutdown["installs"]["users"]
         )
         @app_commands.allowed_contexts(
-            dms=self.shutdown.contexts["dms"],
-            guilds=self.shutdown.contexts["guilds"],
-            private_channels=self.shutdown.contexts["private_channels"]
+            dms=self.shutdown["contexts"]["dms"],
+            guilds=self.shutdown["contexts"]["guilds"],
+            private_channels=self.shutdown["contexts"]["private_channels"]
         )
         @self.tree.command(
-            name=self.shutdown.name,
-            description=self.shutdown.description
+            name=self.shutdown["name"],
+            description=self.shutdown["description"]
         )
         async def shutdown(interaction:Interaction):
             '''
@@ -67,23 +77,56 @@ class Interface:
             This command should only be callable by an administrator
             '''
             try:
-                embed:Embed = self.shutdown.response(
-                    status="pass"
-                )
+                embed:Embed = InterfaceEmbed(
+                    file=__file__, name=self.start["name"]
+                ).response(status="pass")
             except Exception:
-                embed:Embed = self.shutdown.response(
-                    status="fail"
-                )
+                embed:Embed = InterfaceEmbed(
+                    file=__file__, name=self.start["name"]
+                ).response(status="fail")
 
+            # Send shutdown message to aministrator
             await interaction.response.send_message(
-                embed=embed, ephemeral=self.shutdown.ephemeral
+                embed=embed, 
+                ephemeral=self.shutdown["ephemeral"]
             )
             await self.client.close()
             return
-
         return
 
     def event_commands(self):
+        @self.trigger.listen(
+            event_name="on_ready"
+        )
+        @app_commands.allowed_installs(
+            guilds=self.start["installs"]["guilds"],
+            users=self.start["installs"]["users"]
+        )
+        @app_commands.allowed_contexts(
+            dms=self.start["contexts"]["dms"],
+            guilds=self.start["contexts"]["guilds"],
+            private_channels=self.start["contexts"]["private_channels"]
+        )
+        async def start():
+            try:
+                embed:Embed = InterfaceEmbed(
+                    file=__file__, name=self.shutdown["name"]
+                ).response(status="pass")
+            except Exception:
+                embed:Embed = InterfaceEmbed(
+                    file=__file__, name=self.shutdown["name"]
+                ).response(status="fail")
+
+            # Sends start message to administrator
+            admin:User = await self.client.fetch_user(
+                self.permissions.tokens["admin"]
+            )
+            await admin.send(
+                embed=embed
+            )
+
+            return
+
         return
 
 def main():
