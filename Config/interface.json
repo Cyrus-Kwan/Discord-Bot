@@ -3,6 +3,7 @@
         "name":"shutdown",
         "description":"Exits current runtime of bot client",
         "ephemeral":true,
+        "delete_after":10,
         "installs":{
             "guilds":true,
             "users":true
@@ -21,6 +22,33 @@
             "fail":{
                 "title":":warning: Shutdown Failed",
                 "description":"You do not have permission to shut down the bot.",
+                "colour":"red"
+            }
+        }
+    },
+    "start":{
+        "name":"start",
+        "description":"Notification on new bot client runtime",
+        "ephemeral":true,
+        "delete_after":10,
+        "installs":{
+            "guilds":true,
+            "users":true
+        },
+        "contexts":{
+            "guilds":true,
+            "dms":true,
+            "private_channels":true
+        },
+        "embed":{
+            "pass":{
+                "title":":white_check_mark: Start Successful",
+                "description":"Good morning!",
+                "colour":"green"
+            },
+            "fail":{
+                "title":":warning: Start Failed",
+                "description":"Something went wrong.",
                 "colour":"red"
             }
         }
