@@ -24,24 +24,19 @@ colour:dict = {
     key:int(value, base=16) for key, value in config.load("colours.json").items()
 }
 
-class Shutdown:
-    def __init__(self, file:str):
-        const = config.load(path=file)["shutdown"]
-        self.name = const["name"]
-        self.embed = const["embed"]
-        self.installs = const["installs"]
-        self.contexts = const["contexts"]
-        self.ephemeral = const["ephemeral"]
-        self.description = const["description"]
+class InterfaceEmbed:
+    def __init__(self, file:str, name:str):
+        self.command_config:dict = config.load(path=file)[name]
 
     def response(self, status:str):
-        const:dict = self.embed[status]
+        embed_config:dict = self.command_config["embed"][status]
 
         embed = Embed(
-            title=const["title"],
-            description=const["description"],
-            colour=colour[const["colour"]]
+            title=embed_config["title"],
+            description=embed_config["description"],
+            colour=colour[embed_config["colour"]]
         )
+
         return embed
 
 def main():
