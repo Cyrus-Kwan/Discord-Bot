@@ -3,7 +3,6 @@
         "name":"shutdown",
         "description":"Exits current runtime of bot client",
         "ephemeral":true,
-        "delete_after":10,
         "installs":{
             "guilds":true,
             "users":true
@@ -30,7 +29,6 @@
         "name":"start",
         "description":"Notification on new bot client runtime",
         "ephemeral":true,
-        "delete_after":10,
         "installs":{
             "guilds":true,
             "users":true
