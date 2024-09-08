@@ -78,20 +78,22 @@ class Interface:
             '''
             try:
                 embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.start["name"]
+                    file=__file__, name=self.shutdown["name"]
                 ).response(status="pass")
             except Exception:
                 embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.start["name"]
+                    file=__file__, name=self.shutdown["name"]
                 ).response(status="fail")
 
-            # Send shutdown message to aministrator
+            await interaction.user.send(embed=embed)
             await interaction.response.send_message(
                 embed=embed, 
                 ephemeral=self.shutdown["ephemeral"]
             )
+
             await self.client.close()
             return
+
         return
 
     def event_commands(self):
@@ -110,11 +112,11 @@ class Interface:
         async def start():
             try:
                 embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.shutdown["name"]
+                    file=__file__, name=self.start["name"]
                 ).response(status="pass")
             except Exception:
                 embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.shutdown["name"]
+                    file=__file__, name=self.start["name"]
                 ).response(status="fail")
 
             # Sends start message to administrator
