@@ -110,6 +110,10 @@ class Interface:
             private_channels=self.start["contexts"]["private_channels"]
         )
         async def start():
+            '''
+            Notification on new bot client runtime
+            Sends notification to administrator
+            '''
             try:
                 embed:Embed = InterfaceEmbed(
                     file=__file__, name=self.start["name"]
