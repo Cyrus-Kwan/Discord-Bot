@@ -17,16 +17,12 @@ for path in PYTHONPATH.parents:
 
 from Libs.commands.interface import *
 
-'''
-Embed constructors for application commands in interface.py
-'''
-colour:dict = {
-    key:int(value, base=16) for key, value in config.load("colours.json").items()
-}
-
 class InterfaceEmbed:
     def __init__(self, file:str, name:str):
         self.command_config:dict = config.load(path=file)[name]
+        self.colour = {
+            key:int(value, base=16) for key, value in config.load("colours.json").items()
+        }
 
     def response(self, status:str):
         embed_config:dict = self.command_config["embed"][status]
@@ -34,7 +30,7 @@ class InterfaceEmbed:
         embed = Embed(
             title=embed_config["title"],
             description=embed_config["description"],
-            colour=colour[embed_config["colour"]]
+            colour=self.colour[embed_config["colour"]]
         )
 
         return embed
