@@ -1,0 +1,32 @@
+{
+    "steal":{
+        "name":"steal",
+        "description":"Adds an emote from the selected message to a mutual server",
+        "ephemeral":true,
+        "installs":{
+            "guilds":true,
+            "users":true
+        },
+        "contexts":{
+            "guilds":true,
+            "dms":true,
+            "private_channels":true
+        },
+        "embed":{
+            "pass":{
+                "title":":white_check_mark: New Emote Added",
+                "colour":"green"
+            },
+            "fail":{
+                "title":":warning: Error Adding Emote",
+                "colour":"red"
+            }
+        },
+        "scripts":{
+            "emote_pattern":"<a?:[a-zA-Z0-9_~]+:[0-9]+>",
+            "name_pattern":"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)",
+            "code_pattern":"(?:)(?=[0-9]+>)[0-9]+",
+            "url":"https://cdn.discordapp.com/emojis/{code}.gif?size=96&quality=lossless"
+        }
+    }
+}
