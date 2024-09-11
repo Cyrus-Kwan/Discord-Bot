@@ -13,3 +13,4 @@ from discord.app_commands import CommandTree
 # Modules
 from Config import config
 from Commands.Interface.interface import *
+from Commands.Emotes.emotes import *

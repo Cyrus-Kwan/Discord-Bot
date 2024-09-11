@@ -32,6 +32,7 @@ class Client(discord.Client):
 
     async def setup_hook(self):
         await Interface.register(client=self)
+        await Emotes.register(client=self)
 
         await self.tree.sync()
         return
