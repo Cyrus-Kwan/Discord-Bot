@@ -24,8 +24,7 @@ class Emotes:
         self.trigger:Trigger = client.trigger
 
         # Command constants
-        self.permissions = Permission()
-        self.steal = EmotesEmbed(
+        self.steal = EmoteEmbed(
             file=__file__, name="steal"
         ).command_config
 
@@ -67,11 +66,12 @@ class Emotes:
                 emote - list of the available emotes in the selected message
                 rename - what to rename the emote
             '''
-            script:EmoteScript = EmoteScript(
-                file=__file__, name=self.steal["name"]
-            )
-            emotes:dict[str] = script.content(message=message)
-            mutuals:list[Guild] = interaction.user.mutual_guilds()
+            steal = EmoteEmbed(file=__file__, name="steal")
+
+            embed = steal.open()
+            view = steal.view(message=message, interaction=interaction)
+
+            await interaction.response.send_message(embed=embed, view=view)
 
             return
         return
