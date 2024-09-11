@@ -21,25 +21,49 @@ class EmoteScript:
     def __init__(self, file:str, name:str):
         self.script_config:dict = config.load(path=file)[name]["scripts"]
 
-    def content(self, message:str):
+    def content(self, message:Message):
         emote_pattern:str = self.script_config["emote_pattern"]
         name_pattern:str = self.script_config["name_pattern"]
-        code_pattern:str = self.script_config["code_pattern"]
         emote_search:list[str] = re.findall(
-            pattern=pattern, string=message.content
+            pattern=emote_pattern, string=message.content
         )
 
-        emotes:dict[str] = {}
+        emotes:dict[Emoji] = {}
         for emote in emote_search:
             name_search:str = re.search(
                 pattern=name_pattern, string=emote
             ).group()
-            code_search:str = re.search(
-                pattern=code_pattern, string=emote
-            ).group()
 
-            url:str = self.script_config["url"].format(code=code_search)
-            image:str = requests.get(url=url)
-            emotes[name] = image
+            emotes[name_search] = PartialEmoji(
+                name=name_search
+            ).from_str(value=emote)
 
         return emotes
+
+    def emotes(self, message:Message):
+        emotes:dict = self.content(message=message)
+
+        options:dict[SelectOption] = {}
+        for name, emoji in emotes.items():
+            options[name] = {
+                "url":emoji.url,
+                "type":"Emote",
+                "label":SelectOption(label=name),
+                "colour":"gold"
+            }
+
+        return options
+
+    def guilds(self, interaction:Interaction):
+        guilds:list[Guild] = interaction.user.mutual_guilds
+
+        options:list[SelectOption] = {}
+        for guild in guilds:
+            options[guild.name] = {
+                "url":guild.icon,
+                "type":"Server",
+                "label":SelectOption(label=guild.name),
+                "colour":"blurple"
+            }
+
+        return options
