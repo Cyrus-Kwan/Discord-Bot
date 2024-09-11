@@ -13,20 +13,25 @@
             "private_channels":true
         },
         "embed":{
-            "pass":{
-                "title":":white_check_mark: New Emote Added",
-                "colour":"green"
+                "title":":open_file_folder: Steal",
+                "description":"Add an emote to a server",
+                "colour":"gold"
+        },
+        "select":{
+            "emotes":{
+                "placeholder":"Select an emote...",
+                "min_values":1,
+                "max_values":1
             },
-            "fail":{
-                "title":":warning: Error Adding Emote",
-                "colour":"red"
+            "guilds":{
+                "placeholder":"Select a server...",
+                "min_values":1,
+                "max_values":1
             }
         },
         "scripts":{
             "emote_pattern":"<a?:[a-zA-Z0-9_~]+:[0-9]+>",
-            "name_pattern":"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)",
-            "code_pattern":"(?:)(?=[0-9]+>)[0-9]+",
-            "url":"https://cdn.discordapp.com/emojis/{code}.gif?size=96&quality=lossless"
+            "name_pattern":"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
         }
     }
 }
