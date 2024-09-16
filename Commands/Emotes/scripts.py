@@ -49,7 +49,8 @@ class EmoteScript:
                 "url":emoji.url,
                 "type":"Emote",
                 "label":SelectOption(label=name),
-                "colour":"gold"
+                "colour":"gold",
+                "emote":emoji
             }
 
         return options
@@ -63,7 +64,8 @@ class EmoteScript:
                 "url":guild.icon,
                 "type":"Server",
                 "label":SelectOption(label=guild.name),
-                "colour":"blurple"
+                "colour":"blurple",
+                "guild":guild
             }
 
         return options
