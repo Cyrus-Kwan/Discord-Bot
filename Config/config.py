@@ -43,6 +43,13 @@ def name(path:str) -> str:
 
     return search
 
+def colour():
+    colour:dict = {
+        key:int(value, base=16) for key, value in load("colours.json").items()
+    }
+
+    return colour
+
 def main():
     print(load(__file__))
     return
