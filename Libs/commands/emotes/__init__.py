@@ -1,6 +1,8 @@
 # Packages
 import re
 import requests
+from discord import ui
+from discord import ButtonStyle
 from discord import SelectOption
 from discord import Emoji, PartialEmoji
 from discord.ui import Button, Select, View
