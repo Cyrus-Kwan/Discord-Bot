@@ -13,8 +13,10 @@
             "private_channels":true
         },
         "embed":{
-                "title":":open_file_folder: Steal",
-                "description":"Add an emote to a server",
+                "title":":open_file_folder: Steal Emote",
+                "description":[
+                    "Description under construction..."
+                ],
                 "colour":"gold"
         },
         "select":{
