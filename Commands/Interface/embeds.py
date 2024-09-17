@@ -20,9 +20,6 @@ from Libs.commands.interface import *
 class InterfaceEmbed:
     def __init__(self, file:str, name:str):
         self.command_config:dict = config.load(path=file)[name]
-        self.colour = {
-            key:int(value, base=16) for key, value in config.load("colours.json").items()
-        }
 
     def response(self, status:str):
         embed_config:dict = self.command_config["embed"][status]
@@ -30,7 +27,7 @@ class InterfaceEmbed:
         embed = Embed(
             title=embed_config["title"],
             description=embed_config["description"],
-            colour=self.colour[embed_config["colour"]]
+            colour=config.colour[embed_config["colour"]]
         )
 
         return embed
