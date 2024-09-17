@@ -22,11 +22,7 @@ class Emotes:
         self.client:Client = client
         self.tree:CommandTree = client.tree
         self.trigger:Trigger = client.trigger
-
-        # Command constants
-        self.steal = EmoteEmbed(
-            file=__file__, name="steal"
-        ).command_config
+        self.config:dict = config.load(path=__file__)
 
     @classmethod
     async def register(cls, client:Client):
@@ -45,16 +41,16 @@ class Emotes:
 
     def menu_commands(self):
         @app_commands.allowed_installs(
-            guilds=self.steal["installs"]["guilds"],
-            users=self.steal["installs"]["users"]
+            guilds=self.config["steal"]["installs"]["guilds"],
+            users=self.config["steal"]["installs"]["users"]
         )
         @app_commands.allowed_contexts(
-            dms=self.steal["contexts"]["dms"],
-            guilds=self.steal["contexts"]["guilds"],
-            private_channels=self.steal["contexts"]["private_channels"]
+            dms=self.config["steal"]["contexts"]["dms"],
+            guilds=self.config["steal"]["contexts"]["guilds"],
+            private_channels=self.config["steal"]["contexts"]["private_channels"]
         )
         @self.tree.context_menu(
-            name=self.steal["name"]
+            name=self.config["steal"]["name"]
         )
         async def steal(interaction:Interaction, message:Message):
             '''
@@ -66,10 +62,34 @@ class Emotes:
                 emote - list of the available emotes in the selected message
                 rename - what to rename the emote
             '''
-            steal = EmoteEmbed(file=__file__, name="steal")
+            # Emote and view field constants acquired from emotes.json
+            embed_config:dict = self.config["steal"]["embed"]
+            view_config:dict = self.config["steal"]["select"]
+            emote_config:dict = view_config["emotes"]
+            guild_config:dict = view_config["guilds"]
 
-            embed = steal.open()
-            view = steal.view(message=message, interaction=interaction)
+            # Emote and view fields based on the selected message/interaction
+            emote_table:dict = EmoteScript(
+                file=__file__, name="steal"
+            ).emotes(message=message)
+            guild_table:dict = EmoteScript(
+                file=__file__, name="steal"
+            ).guilds(interaction=interaction)
+
+            # Primary display embed that notifies the user of command in use
+            embed = StealEmbed(
+                title=embed_config["title"],
+                colour=config.colour[embed_config["colour"]],
+                description="\n".join(embed_config["description"])
+            )
+
+            # Interactive elements for user to select desired emote
+            view = StealView(
+                emote_config=emote_config,
+                guild_config=guild_config,
+                emote_table=emote_table,
+                guild_table=guild_table
+            )
 
             await interaction.response.send_message(embed=embed, view=view)
 

@@ -17,73 +17,70 @@ for path in PYTHONPATH.parents:
 
 from Libs.commands.emotes import *
 
-class EmoteEmbed:
-    def __init__(self, file:str, name:str):
-        self.file = file
-        self.name = name
+class StealEmbed(Embed):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-        self.command_config:dict = config.load(path=self.file)[self.name]
-        self.colour = {
-            key:int(value, base=16) for key, value in config.load("colours.json").items()
-        }
-    
-    def response(self):
-        return self.embed
-
-    def open(self):
-        embed_config:dict = self.command_config["embed"]
-        embed = Embed(
-            title=embed_config["title"],
-            description=embed_config["description"],
-            colour=self.colour[embed_config["colour"]]
+class StealView(View):
+    def __init__(self, emote_config:dict, guild_config:dict, emote_table:dict, guild_table:dict):
+        super().__init__()
+        # Instantiate dropdown menus for new emote location
+        emote_menu:Select = StealSelect(
+            menu=emote_config, table=emote_table
+        )
+        guild_menu:Select = StealSelect(
+            menu=guild_config, table=guild_table
         )
 
-        return embed
+        # Instantiate buttons for emote select confirmation
+        cancel_button = Button(
+            label="Cancel", style=ButtonStyle.primary
+        )
+        confirm_button = Button(
+            label="Confirm", style=ButtonStyle.primary
+        )
+        rename_button = Button(
+            label="Rename", style=ButtonStyle.primary
+        )
 
-    def view(self, message:Message, interaction:Interaction):
+        # Link buttons to their callbacks
+        cancel_button.callback = self.cancel
+        rename_button.callback = self.rename
+        confirm_button.callback = self.confirm
+
+        # Add dropdown menus to the view
+        self.add_item(emote_menu)
+        self.add_item(guild_menu)
+
+        # Add buttons after the dropdown menus
+        self.add_item(cancel_button)
+        self.add_item(rename_button)
+        self.add_item(confirm_button)
+
+    async def confirm(self, interaction:Interaction):
+        '''Callback for confirm button'''
+        await interaction.response.send_message("Confirm")
+
+    async def rename(self, interaction:Interaction):
+        '''Callback for rename button'''
+        await interaction.response.send_message("Rename")
+
+    async def cancel(self, interaction:Interaction):
+        '''Callback for cancel button'''
+        await interaction.response.send_message("Cancel")
+
+class StealSelect(Select):
+    def __init__(self, menu:dict, table:dict):
         '''
-        embeds: Stores embeds to be modified on dropdown selection
-        emote_scrip: Used to process emotes and guilds from message and interactions
+        Parameters
+            menu: The list of dropdown items that the menu will read as SelectOptions
+            table: Option configs and objects for use in callback
+            embeds: Map of existing embeds to update
         '''
-        embeds:dict = {}
-        emote_script = EmoteScript(file=self.file, name=self.name)
-
-        # View configurations for dropdown menus
-        select_emote:dict = self.command_config["select"]["emotes"]
-        select_guild:dict = self.command_config["select"]["guilds"]
-
-        # Processed emote and guild elements for respective embeds
-        emote_table:dict = emote_script.emotes(message=message)
-        guild_table:dict = emote_script.guilds(interaction=interaction)
-
-        # Dropdown menus
-        emotes = SelectMenu(menu=select_emote, table=emote_table, embeds=embeds)
-        guilds = SelectMenu(menu=select_guild, table=guild_table, embeds=embeds)
-
-        confirm = '''Add confirm selection button'''
-        cancel = '''Add cancel selection button'''
-
-        view = SelectView(emotes, guilds)
-
-        return view
-
-class Confirm(Button):
-    def __init__(self):
-        super().__init__()
-
-    async def callback(interaction:Interaction):
-        await interaction.message.delete()
-        await interaction.response.send_message("Button")
-
-class SelectMenu(Select):
-    def __init__(self, menu:dict, table:dict, embeds:dict):
+        self.menu:dict = menu
         self.table:dict = table
-        self.embeds:dict = embeds
-        self.colour:dict = {
-            key:int(value, base=16) for key, value in config.load("colours.json").items()
-        }
-
-        options:list = [value["label"] for value in table.values()]
+        self.colour = config.colour
+        options:list = [option["label"] for option in table.values()]
 
         super().__init__(
             placeholder=menu["placeholder"],
@@ -93,28 +90,4 @@ class SelectMenu(Select):
         )
 
     async def callback(self, interaction:Interaction):
-        '''
-        Modifies the dropdown embed response as a footer
-        '''
-        # User selection from dropdown menu
-        select:dict = self.table[self.values[0]]
-        
-        # Embed response for user selection
-        option = Embed(
-            colour=self.colour[select["colour"]], 
-        )
-        option.set_footer(
-            text=select["type"], icon_url=select["url"]
-        )
-
-        # Update all selected embeds to the dropdown user selections
-        self.embeds["origin"] = interaction.message.embeds[0]
-        self.embeds[select["type"]] = option
-
-        await interaction.response.edit_message(embeds=self.embeds.values())
-
-class SelectView(View):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-        for menu in args:
-            self.add_item(menu)
+        await interaction.response.send_message(content=self.values)
