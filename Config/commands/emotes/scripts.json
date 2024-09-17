@@ -1,0 +1,4 @@
+{
+    "emote_pattern":"<a?:[a-zA-Z0-9_~]+:[0-9]+>",
+    "name_pattern":"(?:[a-zA-Z0-9_~]+)[a-zA-Z0-9_~]+(?=:)"
+}

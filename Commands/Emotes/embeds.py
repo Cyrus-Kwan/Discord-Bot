@@ -67,6 +67,12 @@ class StealView(View):
 
     async def cancel(self, interaction:Interaction):
         '''Callback for cancel button'''
+        embed_config = config.load(
+            path="commands/emotes/steal/views/cancel_button.json"
+        )
+        embed = Embed(
+            title=embed_config
+        )
         await interaction.response.send_message("Cancel")
 
 class StealSelect(Select):

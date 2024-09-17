@@ -1,0 +1,14 @@
+{
+    "name":"shutdown",
+    "description":"Exits current runtime of bot client",
+    "ephemeral":true,
+    "installs":{
+        "guilds":true,
+        "users":true
+    },
+    "contexts":{
+        "guilds":true,
+        "dms":true,
+        "private_channels":true
+    }
+}

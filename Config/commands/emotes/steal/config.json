@@ -1,0 +1,14 @@
+{
+    "name":"steal",
+    "description":"Adds an emote from the selected message to a mutual server",
+    "ephemeral":true,
+    "installs":{
+        "guilds":true,
+        "users":true
+    },
+    "contexts":{
+        "guilds":true,
+        "dms":true,
+        "private_channels":true
+    }
+}

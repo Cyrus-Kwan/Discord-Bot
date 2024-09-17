@@ -22,7 +22,7 @@ def load(path:str) -> dict:
     Returns config data from respective file path
     '''
     directory = pathlib.Path(__file__).parent
-    config:str = f"{name(path=path)}.json"
+    config:str = path
 
     with open(directory / config) as f:
         data:dict = json.load(f)
@@ -44,7 +44,7 @@ def name(path:str) -> str:
     return search
 
 colour:dict = {
-    key:int(value, base=16) for key, value in load("colours.json").items()
+    key:int(value, base=16) for key, value in load("assets/colours.json").items()
 }
 
 def main():

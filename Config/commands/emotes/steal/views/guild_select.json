@@ -1,0 +1,5 @@
+{
+    "placeholder":"Select a server...",
+    "min_values":1,
+    "max_values":1
+}

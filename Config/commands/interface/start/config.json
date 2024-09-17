@@ -1,0 +1,14 @@
+{
+    "name":"start",
+    "description":"Notification on new bot client runtime",
+    "ephemeral":true,
+    "installs":{
+        "guilds":true,
+        "users":true
+    },
+    "contexts":{
+        "guilds":true,
+        "dms":true,
+        "private_channels":true
+    }
+}

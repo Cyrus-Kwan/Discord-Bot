@@ -24,15 +24,14 @@ class Interface:
         self.tree:CommandTree = client.tree
         self.trigger:Trigger = client.trigger
 
-        # Command constants
+        # Command configs
         self.permissions = Permission()
-        self.start = InterfaceEmbed(
-            file=__file__, name="start"
-        ).command_config
-
-        self.shutdown = InterfaceEmbed(
-            file=__file__, name="shutdown"
-        ).command_config
+        self.start = config.load(
+            path="commands/interface/start/config.json"
+        )
+        self.shutdown = config.load(
+            path="commands/interface/shutdown/config.json"
+        )
 
     @classmethod
     async def register(cls, client:Client):
@@ -77,13 +76,9 @@ class Interface:
             This command should only be callable by an administrator
             '''
             try:
-                embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.shutdown["name"]
-                ).response(status="pass")
+                embed:Embed = ShutdownEmbed(status="pass")
             except Exception:
-                embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.shutdown["name"]
-                ).response(status="fail")
+                embed:Embed = ShutdownEmbed(status="fail")
 
             await interaction.user.send(embed=embed)
             await interaction.response.send_message(
@@ -115,13 +110,9 @@ class Interface:
             Sends notification to administrator
             '''
             try:
-                embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.start["name"]
-                ).response(status="pass")
+                embed:Embed = StartEmbed(status="pass")
             except Exception:
-                embed:Embed = InterfaceEmbed(
-                    file=__file__, name=self.start["name"]
-                ).response(status="fail")
+                embed:Embed = StartEmbed(status="fail")
 
             # Sends start message to administrator
             admin:User = await self.client.fetch_user(

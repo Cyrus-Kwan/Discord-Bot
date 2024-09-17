@@ -18,8 +18,8 @@ for path in PYTHONPATH.parents:
 from Libs.commands.emotes import *
 
 class EmoteScript:
-    def __init__(self, file:str, name:str):
-        self.script_config:dict = config.load(path=file)[name]["scripts"]
+    def __init__(self):
+        self.script_config:dict = config.load(path="commands/emotes/scripts.json")
 
     def content(self, message:Message):
         emote_pattern:str = self.script_config["emote_pattern"]

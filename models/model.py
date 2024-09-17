@@ -29,7 +29,6 @@ class Model:
         This should be called as 'obj = Model.create(database)' 
         whenever a new model is created instead of 'obj = Model(database)'
         '''        
-        
         self = cls(db_name=db_name)
         
         if query:
@@ -42,9 +41,12 @@ class Model:
         Connects to the specified database
         Creates a new database if none exists
         '''
-        cfg_data:dict = config.load(__file__)
+        model_config:dict = config.load(
+            path="model.json"
+        )
+        
         curr_dir:str = pathlib.Path(__file__).parent
-        data_dir:str = cfg_data["directory"]
+        data_dir:str = model_config["directory"]
         database:str = curr_dir / data_dir / db_name
 
         con:Connection = sqlite3.connect(database=database)

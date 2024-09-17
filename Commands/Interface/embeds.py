@@ -17,20 +17,29 @@ for path in PYTHONPATH.parents:
 
 from Libs.commands.interface import *
 
-class InterfaceEmbed:
-    def __init__(self, file:str, name:str):
-        self.command_config:dict = config.load(path=file)[name]
+class StartEmbed(Embed):
+    def __init__(self, status:str):
+        embed_config:dict = config.load(
+            path="commands/interface/start/embeds/main.json"
+        )[status]
 
-    def response(self, status:str):
-        embed_config:dict = self.command_config["embed"][status]
-
-        embed = Embed(
+        super().__init__(
             title=embed_config["title"],
             description=embed_config["description"],
             colour=config.colour[embed_config["colour"]]
         )
 
-        return embed
+class ShutdownEmbed(Embed):
+    def __init__(self, status:str):
+        embed_config:dict = config.load(
+            path="commands/interface/shutdown/embeds/main.json"
+        )[status]
+
+        super().__init__(
+            title=embed_config["title"],
+            description=embed_config["description"],
+            colour=config.colour[embed_config["colour"]]
+        )
 
 def main():
     return
