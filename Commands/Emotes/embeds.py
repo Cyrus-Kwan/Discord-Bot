@@ -24,12 +24,22 @@ class StealEmbed(Embed):
 class StealView(View):
     def __init__(self, emote_config:dict, guild_config:dict, emote_table:dict, guild_table:dict):
         super().__init__()
+        # Stores the user'd dropdown selections and the response
+        self.selection:dict = {}
+        self.responses:dict = {}
+
         # Instantiate dropdown menus for new emote location
-        emote_menu:Select = StealSelect(
-            menu=emote_config, table=emote_table
+        emote_menu:Select = StealEmote(
+            menu=emote_config,
+            table=emote_table,
+            selection=self.selection,
+            responses=self.responses
         )
-        guild_menu:Select = StealSelect(
-            menu=guild_config, table=guild_table
+        guild_menu:Select = StealGuild(
+            menu=guild_config,
+            table=guild_table,
+            selection=self.selection,
+            responses=self.responses
         )
 
         # Instantiate buttons for emote select confirmation
@@ -57,26 +67,36 @@ class StealView(View):
         self.add_item(rename_button)
         self.add_item(confirm_button)
 
-    async def confirm(self, interaction:Interaction):
-        '''Callback for confirm button'''
-        await interaction.response.send_message("Confirm")
-
     async def rename(self, interaction:Interaction):
         '''Callback for rename button'''
         await interaction.response.send_message("Rename")
 
     async def cancel(self, interaction:Interaction):
         '''Callback for cancel button'''
-        embed_config = config.load(
-            path="commands/emotes/steal/views/cancel_button.json"
+        embed_config:dict = config.load(
+            path="commands/emotes/steal/embeds/cancel_button.json"
         )
         embed = Embed(
-            title=embed_config
+            title=embed_config["title"],
+            colour=config.colour[embed_config["colour"]],
+            description=embed_config["description"]
         )
-        await interaction.response.send_message("Cancel")
 
-class StealSelect(Select):
-    def __init__(self, menu:dict, table:dict):
+        for message in self.responses.values():
+            await message.delete()
+
+        await interaction.response.edit_message(
+            embed=embed, 
+            view=embed_config["view"], 
+            delete_after=embed_config["delete_after"]
+        )
+
+    async def confirm(self, interaction:Interaction):
+        '''Callback for confirm button'''
+        await interaction.response.send_message("Confirm")
+
+class StealEmote(Select):
+    def __init__(self, menu:dict, table:dict, selection:dict, responses:dict):
         '''
         Parameters
             menu: The list of dropdown items that the menu will read as SelectOptions
@@ -85,7 +105,9 @@ class StealSelect(Select):
         '''
         self.menu:dict = menu
         self.table:dict = table
-        self.colour = config.colour
+        self.colour:dict = config.colour
+        self.selection:dict = selection
+        self.responses:dict = responses
         options:list = [option["label"] for option in table.values()]
 
         super().__init__(
@@ -96,4 +118,71 @@ class StealSelect(Select):
         )
 
     async def callback(self, interaction:Interaction):
-        await interaction.response.send_message(content=self.values)
+        key:str = self.table[self.values[0]]["type"]
+        self.selection[key] = self.table[self.values[0]]
+
+        embed = Embed()
+        embed.set_author(
+            name=key
+        )
+        embed.set_footer(
+            text=self.values[0], 
+            icon_url=self.table[self.values[0]]["url"]
+        )
+
+        if key in self.responses.keys():
+            # Modifies the Message object to the new selection
+            await interaction.response.defer()
+            await self.responses[key].edit(embed=embed)
+        else:
+            # Adds a Message object to the responses map
+            await interaction.response.defer()
+            self.responses[key] = await interaction.followup.send(
+                embed=embed
+            )
+
+class StealGuild(Select):
+    def __init__(self, menu:dict, table:dict, selection:dict, responses:dict):
+        '''
+        Parameters
+            menu: The list of dropdown items that the menu will read as SelectOptions
+            table: Option configs and objects for use in callback
+            embeds: Map of existing embeds to update
+        '''
+        self.menu:dict = menu
+        self.table:dict = table
+        self.colour:dict = config.colour
+        self.selection:dict = selection
+        self.responses:dict = responses
+        options:list = [option["label"] for option in table.values()]
+
+        super().__init__(
+            placeholder=menu["placeholder"],
+            min_values=menu["min_values"],
+            max_values=menu["max_values"],
+            options=options
+        )
+
+    async def callback(self, interaction:Interaction):
+        key:str = self.table[self.values[0]]["type"]
+        self.selection[key] = self.table[self.values[0]]
+
+        embed = Embed()
+        embed.set_author(
+            name=key
+        )
+        embed.set_footer(
+            text=self.values[0], 
+            icon_url=self.table[self.values[0]]["url"]
+        )
+
+        if key in self.responses.keys():
+            # Modifies the Message object to the new selection
+            await interaction.response.defer()
+            await self.responses[key].edit(embed=embed)
+        else:
+            # Adds a Message object to the responses map
+            await interaction.response.defer()
+            self.responses[key] = await interaction.followup.send(
+                embed=embed
+            )

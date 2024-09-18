@@ -49,7 +49,6 @@ class EmoteScript:
                 "url":emoji.url,
                 "type":"Emote",
                 "label":SelectOption(label=name),
-                "colour":"gold",
                 "emote":emoji
             }
 
@@ -64,7 +63,6 @@ class EmoteScript:
                 "url":guild.icon,
                 "type":"Server",
                 "label":SelectOption(label=guild.name),
-                "colour":"blurple",
                 "guild":guild
             }
 
