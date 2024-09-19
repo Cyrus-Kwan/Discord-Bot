@@ -49,7 +49,7 @@ class EmoteScript:
                 "url":emoji.url,
                 "type":"Emote",
                 "label":SelectOption(label=name),
-                "emote":emoji
+                "emoji":emoji
             }
 
         return options

@@ -44,13 +44,13 @@ class StealView(View):
 
         # Instantiate buttons for emote select confirmation
         cancel_button = Button(
-            label="Cancel", style=ButtonStyle.primary
+            label="Cancel", style=ButtonStyle.red
         )
         confirm_button = Button(
-            label="Confirm", style=ButtonStyle.primary
+            label="Confirm", style=ButtonStyle.green
         )
         rename_button = Button(
-            label="Rename", style=ButtonStyle.primary
+            label="Rename", style=ButtonStyle.blurple
         )
 
         # Link buttons to their callbacks
@@ -69,6 +69,7 @@ class StealView(View):
 
     async def rename(self, interaction:Interaction):
         '''Callback for rename button'''
+
         await interaction.response.send_message("Rename")
 
     async def cancel(self, interaction:Interaction):
@@ -76,14 +77,20 @@ class StealView(View):
         embed_config:dict = config.load(
             path="commands/emotes/steal/embeds/cancel_button.json"
         )
+
+        # Clear selection indicator embeds
+        for message in self.responses.values():
+            await message.delete()
+
+        # Clear empty map
+        self.responses = {}
+
+        # Response embed
         embed = Embed(
             title=embed_config["title"],
             colour=config.colour[embed_config["colour"]],
             description=embed_config["description"]
         )
-
-        for message in self.responses.values():
-            await message.delete()
 
         await interaction.response.edit_message(
             embed=embed, 
@@ -93,7 +100,46 @@ class StealView(View):
 
     async def confirm(self, interaction:Interaction):
         '''Callback for confirm button'''
-        await interaction.response.send_message("Confirm")
+        embed_config:dict = config.load(
+            path="commands/emotes/steal/embeds/confirm_button.json"
+        )
+
+        # Variable handling
+        emoji:Emoji = self.selection["Emote"]["emoji"]
+        guild:Guild = self.selection["Server"]["guild"]
+
+        name:str = emoji.name
+        image:str = requests.get(url=emoji.url).content
+
+        # Add selected emote to the server
+        await guild.create_custom_emoji(
+            name=name,
+            image=image
+        )
+        
+        # Clear selection indicator embeds
+        for message in self.responses.values():
+            await message.delete()
+
+        self.responses = {}
+
+        # Response embed
+        embed = Embed(
+            title=embed_config["title"],
+            colour=config.colour[embed_config["colour"]],
+            description=embed_config["description"].format(
+                name=name, guild=guild
+            )
+        )
+        embed.set_thumbnail(url=emoji.url)
+
+        await interaction.response.send_message(
+            embed=embed, ephemeral=True
+        )
+        '''
+        Should also send embed to the selected guild. 
+        Try and figure out which channel to send embed to
+        '''
 
 class StealEmote(Select):
     def __init__(self, menu:dict, table:dict, selection:dict, responses:dict):
