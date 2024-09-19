@@ -2,13 +2,11 @@
     "pass":{
         "title":":white_check_mark: Start Successful",
         "description":"Good morning!",
-        "ephemeral":true,
         "colour":"green"
     },
     "fail":{
         "title":":warning: Start Failed",
         "description":"Something went wrong.",
-        "ephemeral":true,
         "colour":"red"
     }
 }
