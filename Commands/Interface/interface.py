@@ -119,7 +119,8 @@ class Interface:
                 self.permissions.tokens["admin"]
             )
             await admin.send(
-                embed=embed
+                embed=embed,
+                ephemeral=self.start["ephemeral"]
             )
 
             return
