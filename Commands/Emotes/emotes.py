@@ -96,7 +96,11 @@ class Emotes:
                 guild_table=guild_table
             )
 
-            await interaction.response.send_message(embed=embed, view=view)
+            await interaction.response.send_message(
+                embed=embed, 
+                view=view, 
+                ephemeral=embed_config["ephemeral"]
+            )
 
             return
         return
