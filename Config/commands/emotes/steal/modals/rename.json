@@ -1,0 +1,7 @@
+{
+    "title":"Rename Emote",
+    "custom_id":"rename",
+    "label":"New name",
+    "placeholder":"What would you like to name this emote?",
+    "required":false
+}
