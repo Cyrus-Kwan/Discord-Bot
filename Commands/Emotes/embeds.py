@@ -24,7 +24,7 @@ class StealEmbed(Embed):
 class StealView(View):
     def __init__(self, emote_config:dict, guild_config:dict, emote_table:dict, guild_table:dict):
         super().__init__()
-        # Stores the user'd dropdown selections and the response
+        # Stores the users dropdown selections and the response
         self.selection:dict = {}
         self.responses:dict = {}
 
@@ -69,8 +69,11 @@ class StealView(View):
 
     async def rename(self, interaction:Interaction):
         '''Callback for rename button'''
-
-        await interaction.response.send_message("Rename")
+        modal = StealModal(
+            selection=self.selection,
+            responses=self.responses
+        )
+        await interaction.response.send_modal(modal)
 
     async def cancel(self, interaction:Interaction):
         '''Callback for cancel button'''
@@ -232,3 +235,48 @@ class StealGuild(Select):
             self.responses[key] = await interaction.followup.send(
                 embed=embed
             )
+
+class StealModal(Modal):
+    def __init__(self, selection:dict, responses:dict):
+        # Load modal configuration from JSON file
+        modal_config:dict = config.load(
+            path="commands/emotes/steal/modals/rename.json"
+        )
+
+        # Call the parent constructor and set the custom id
+        super().__init__(
+            title=modal_config["title"], 
+            custom_id=modal_config["custom_id"]
+        )
+
+        # Reference the selection and response dictionaries from view
+        self.responses:dict = responses
+        self.selection:dict = selection
+
+        # Modal for the user to rename the selected emote to
+        self.rename:str = TextInput(
+            label=modal_config["label"],
+            placeholder=modal_config["placeholder"],
+            required=modal_config["required"]
+        )
+
+        self.add_item(self.rename)
+
+    async def on_submit(self, interaction:Interaction):
+        # Changes the currently selected emote to the new name
+        emoji:Emoji = self.selection["Emote"]["emoji"]
+        emoji.name = self.rename.value
+
+        # Interaction response to modal submission
+        embed = Embed()
+        embed.set_author(
+            name="Emote"
+        )
+        embed.set_footer(
+            text=self.rename.value, 
+            icon_url=self.selection["Emote"]["url"]
+        )
+
+        # Modifies the Message object to the new selection
+        await interaction.response.defer()
+        await self.responses["Emote"].edit(embed=embed)
