@@ -154,7 +154,6 @@ class StealEmote(Select):
         '''
         self.menu:dict = menu
         self.table:dict = table
-        self.colour:dict = config.colour
         self.selection:dict = selection
         self.responses:dict = responses
         options:list = [option["label"] for option in table.values()]
@@ -166,11 +165,30 @@ class StealEmote(Select):
             options=options
         )
 
+    async def colour(self):
+        '''
+        Checks if the emote name already exists in the selected server
+        '''
+        if "Server" not in self.selection.keys():
+            return config.colour["gold"]
+
+        guild:Guild = self.selection["Server"]["guild"]
+        emoji:list[Emoji] = await guild.fetch_emojis()
+        names:list[str] = [emote.name for emote in emoji]
+        selected:str = self.selection["Emote"]["emoji"].name
+
+        if selected not in names:
+            return config.colour["green"]
+        else:
+            return config.colour["red"]
+
     async def callback(self, interaction:Interaction):
         key:str = self.table[self.values[0]]["type"]
         self.selection[key] = self.table[self.values[0]]
 
-        embed = Embed()
+        colour:str = await self.colour()
+
+        embed = Embed(colour=colour)
         embed.set_author(
             name=key
         )
@@ -187,7 +205,8 @@ class StealEmote(Select):
             # Adds a Message object to the responses map
             await interaction.response.defer()
             self.responses[key] = await interaction.followup.send(
-                embed=embed
+                embed=embed,
+                ephemeral=True
             )
 
 class StealGuild(Select):
@@ -200,7 +219,6 @@ class StealGuild(Select):
         '''
         self.menu:dict = menu
         self.table:dict = table
-        self.colour:dict = config.colour
         self.selection:dict = selection
         self.responses:dict = responses
         options:list = [option["label"] for option in table.values()]
@@ -212,11 +230,26 @@ class StealGuild(Select):
             options=options
         )
 
+    async def colour(self):
+        '''
+        Checks to see if the selected guild has any vacant emote slots.
+        '''
+        guild:Guild = self.selection["Server"]["guild"]
+        limit:int = guild.emoji_limit
+        emoji:list[Emoji] = await guild.fetch_emojis()
+
+        if len(emoji) <= limit:
+            return config.colour["green"]
+        else:
+            return config.colour["red"]
+
     async def callback(self, interaction:Interaction):
         key:str = self.table[self.values[0]]["type"]
         self.selection[key] = self.table[self.values[0]]
 
-        embed = Embed()
+        colour:str = await self.colour()
+
+        embed = Embed(colour=colour)
         embed.set_author(
             name=key
         )
@@ -233,7 +266,8 @@ class StealGuild(Select):
             # Adds a Message object to the responses map
             await interaction.response.defer()
             self.responses[key] = await interaction.followup.send(
-                embed=embed
+                embed=embed,
+                ephemeral=True
             )
 
 class StealModal(Modal):
