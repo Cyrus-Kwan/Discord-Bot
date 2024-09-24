@@ -1,6 +1,6 @@
 {
     "title":":warning: An Error Occurred...",
     "colour":"red",
-    "description":"Make sure that both an `emote` and a `server` are selected before confirming your selection.",
+    "description":"**Ensure the following requirements have been met:**\n1. Emote has been selected\n2. Server has been selected\n3. Emote is unique in the selected server\n4. Server has vacant emote slots",
     "ephemeral":true
 }

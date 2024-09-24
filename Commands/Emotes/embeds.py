@@ -67,6 +67,34 @@ class StealView(View):
         self.add_item(rename_button)
         self.add_item(confirm_button)
 
+    async def valid_selection(self):
+        '''
+        Conditions:
+            1. Emote has been selected
+            2. Server has been selected
+            3. Emote is unique in the selected server
+            4. Server has vacant emote slots
+        '''
+        emote:Emoji = self.selection["Emote"]["emoji"]
+        guild:GUild = self.selection["Server"]["guild"]
+        guild_emote = await guild.fetch_emojis()
+        emote_names = [emoji.name for emoji in guild_emote]
+        emote_limit = guild.emoji_limit
+
+        if "Emote" not in self.selection.keys():
+            return False
+        
+        if "Server" not in self.selection.keys():
+            return False
+
+        if emote.name in emote_names:
+            return False
+
+        if len(emote_names) >= emote_limit:
+            return False
+
+        return True
+
     async def rename(self, interaction:Interaction):
         '''Callback for rename button'''
         modal = StealModal(
@@ -80,13 +108,7 @@ class StealView(View):
         embed_config:dict = config.load(
             path="commands/emotes/steal/embeds/cancel_button.json"
         )
-
-        # Clear selection indicator embeds
-        for message in self.responses.values():
-            await message.delete()
-
-        # Clear empty map
-        self.responses = {}
+        colour:dict = config.colour
 
         # Response embed
         embed = Embed(
@@ -94,6 +116,13 @@ class StealView(View):
             colour=config.colour[embed_config["colour"]],
             description=embed_config["description"]
         )
+
+        # Clear selection indicator embeds
+        for message in self.responses.values():
+            await message.delete()
+
+        # Clear empty map
+        self.responses = {}
 
         await interaction.response.edit_message(
             embed=embed, 
@@ -106,25 +135,33 @@ class StealView(View):
         embed_config:dict = config.load(
             path="commands/emotes/steal/embeds/confirm_button.json"
         )
+        error_config:dict = config.load(
+            path="commands/emotes/steal/embeds/confirm_error.json"
+        )
+
+        # Check if the selections meet the requirements for adding
+        valid:bool = await self.valid_selection()
+
+        # Error embed
+        error = Embed(
+            title=error_config["title"],
+            colour=config.colour[error_config["colour"]],
+            description=error_config["description"]
+        )
+
+        # Check if valid emote selections have been made
+        if not valid:
+            await interaction.response.send_message(
+                embed=error, ephemeral=error_config["ephemeral"]
+            )
+            return
 
         # Variable handling
         emoji:Emoji = self.selection["Emote"]["emoji"]
         guild:Guild = self.selection["Server"]["guild"]
-
+        
         name:str = emoji.name
         image:str = requests.get(url=emoji.url).content
-
-        # Add selected emote to the server
-        await guild.create_custom_emoji(
-            name=name,
-            image=image
-        )
-        
-        # Clear selection indicator embeds
-        for message in self.responses.values():
-            await message.delete()
-
-        self.responses = {}
 
         # Response embed
         embed = Embed(
@@ -136,13 +173,21 @@ class StealView(View):
         )
         embed.set_thumbnail(url=emoji.url)
 
-        await interaction.response.send_message(
-            embed=embed, ephemeral=True
+        # Add selected emote to the server
+        await guild.create_custom_emoji(
+            name=name,
+            image=image
         )
-        '''
-        Should also send embed to the selected guild. 
-        Try and figure out which channel to send embed to
-        '''
+
+        # Clear selection indicator embeds
+        for message in self.responses.values():
+            await message.delete()
+
+        self.responses = {}
+
+        await interaction.response.send_message(
+            embed=embed, ephemeral=embed_config["ephemeral"]
+        )
 
 class StealEmote(Select):
     def __init__(self, menu:dict, table:dict, selection:dict, responses:dict):
@@ -178,8 +223,10 @@ class StealEmote(Select):
         selected:str = self.selection["Emote"]["emoji"].name
 
         if selected not in names:
+            self.valid:bool = True
             return config.colour["green"]
         else:
+            self.valid:bool = False
             return config.colour["red"]
 
     async def callback(self, interaction:Interaction):
@@ -239,8 +286,10 @@ class StealGuild(Select):
         emoji:list[Emoji] = await guild.fetch_emojis()
 
         if len(emoji) <= limit:
+            self.valid:bool = True
             return config.colour["green"]
         else:
+            self.valid:bool = False
             return config.colour["red"]
 
     async def callback(self, interaction:Interaction):
