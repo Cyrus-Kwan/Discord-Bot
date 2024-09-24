@@ -1,0 +1,6 @@
+{
+    "title":":warning: An Error Occurred...",
+    "colour":"red",
+    "description":"Make sure that both an `emote` and a `server` are selected before confirming your selection.",
+    "ephemeral":true
+}
