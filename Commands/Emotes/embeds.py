@@ -43,20 +43,15 @@ class StealView(View):
         )
 
         # Instantiate buttons for emote select confirmation
-        cancel_button = Button(
-            label="Cancel", style=ButtonStyle.red
+        cancel_button = CancelButton(
+            selection=self.selection, responses=self.responses
         )
-        confirm_button = Button(
-            label="Confirm", style=ButtonStyle.green
+        rename_button = RenameButton(
+            selection=self.selection, responses=self.responses
         )
-        rename_button = Button(
-            label="Rename", style=ButtonStyle.blurple
+        confirm_button = ConfirmButton(
+            selection=self.selection, responses=self.responses
         )
-
-        # Link buttons to their callbacks
-        cancel_button.callback = self.cancel
-        rename_button.callback = self.rename
-        confirm_button.callback = self.confirm
 
         # Add dropdown menus to the view
         self.add_item(emote_menu)
@@ -66,6 +61,69 @@ class StealView(View):
         self.add_item(cancel_button)
         self.add_item(rename_button)
         self.add_item(confirm_button)
+
+class CancelButton(Button):
+    def __init__(self, selection:dict, responses:dict):
+        self.selection:dict = selection
+        self.responses:dict = responses
+
+        super().__init__(
+            label="Cancel", style=ButtonStyle.red
+        )
+
+    async def callback(self, interaction:Interaction):
+        '''Callback for cancel button'''
+        embed_config:dict = config.load(
+            path="commands/emotes/steal/embeds/cancel_button.json"
+        )
+        colour:dict = config.colour
+
+        # Response embed
+        embed = Embed(
+            title=embed_config["title"],
+            colour=config.colour[embed_config["colour"]],
+            description=embed_config["description"]
+        )
+
+        # Clear selection indicator embeds
+        for message in self.responses.values():
+            print(self.responses)
+            await message.delete()
+
+        # Clear empty map
+        self.responses = {}
+
+        await interaction.response.edit_message(
+            embed=embed, 
+            view=embed_config["view"], 
+            delete_after=embed_config["delete_after"]
+        )
+
+class RenameButton(Button):
+    def __init__(self, selection:dict, responses:dict):
+        self.selection:dict = selection
+        self.responses:dict = responses
+
+        super().__init__(
+            label="Rename", style=ButtonStyle.blurple
+        )
+    
+    async def callback(self, interaction:Interaction):
+        '''Callback for rename button'''
+        modal = StealModal(
+            selection=self.selection,
+            responses=self.responses
+        )
+        await interaction.response.send_modal(modal)
+
+class ConfirmButton(Button):
+    def __init__(self, selection:dict, responses:dict):
+        self.selection:dict = selection
+        self.responses:dict = responses
+
+        super().__init__(
+            label="Confirm", style=ButtonStyle.green
+        )
 
     async def valid_selection(self):
         '''
@@ -95,42 +153,7 @@ class StealView(View):
 
         return True
 
-    async def rename(self, interaction:Interaction):
-        '''Callback for rename button'''
-        modal = StealModal(
-            selection=self.selection,
-            responses=self.responses
-        )
-        await interaction.response.send_modal(modal)
-
-    async def cancel(self, interaction:Interaction):
-        '''Callback for cancel button'''
-        embed_config:dict = config.load(
-            path="commands/emotes/steal/embeds/cancel_button.json"
-        )
-        colour:dict = config.colour
-
-        # Response embed
-        embed = Embed(
-            title=embed_config["title"],
-            colour=config.colour[embed_config["colour"]],
-            description=embed_config["description"]
-        )
-
-        # Clear selection indicator embeds
-        for message in self.responses.values():
-            await message.delete()
-
-        # Clear empty map
-        self.responses = {}
-
-        await interaction.response.edit_message(
-            embed=embed, 
-            view=embed_config["view"], 
-            delete_after=embed_config["delete_after"]
-        )
-
-    async def confirm(self, interaction:Interaction):
+    async def callback(self, interaction:Interaction):
         '''Callback for confirm button'''
         embed_config:dict = config.load(
             path="commands/emotes/steal/embeds/confirm_button.json"
