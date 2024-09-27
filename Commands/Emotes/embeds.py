@@ -125,7 +125,28 @@ class ConfirmButton(Button):
             label="Confirm", style=ButtonStyle.green
         )
 
-    async def valid_selection(self):
+    async def valid(self):
+        '''
+        Determines if an emote can be added to the selected server
+        '''
+        try:
+            emote:Emoji = self.selection["Emote"]["emoji"]
+            guild:Guild = self.selection["Server"]["guild"]
+        except KeyError as error:
+            return False
+
+        guild_emote = await guild.fetch_emojis()
+        emote_names = [emoji.name for emoji in guild_emote]
+        emote_limit = guild.emoji_limit
+
+        if emote.name in emote_names:
+            return False
+        elif len(emote_names) >= emote_limit:
+            return False
+        else:
+            return True
+
+    async def embed(self):
         '''
         Conditions:
             1. Emote has been selected
@@ -133,84 +154,89 @@ class ConfirmButton(Button):
             3. Emote is unique in the selected server
             4. Server has vacant emote slots
         '''
-        emote:Emoji = self.selection["Emote"]["emoji"]
-        guild:GUild = self.selection["Server"]["guild"]
+        pass_config = config.load(
+            path="commands/emotes/steal/embeds/confirm_button.json"
+        )
+        fail_config = config.load(
+            path="commands/emotes/steal/embeds/confirm_error.json"
+        )
+
+        try:
+            emote:Emoji = self.selection["Emote"]["emoji"]
+            guild:Guild = self.selection["Server"]["guild"]
+        except KeyError as error:
+            key_error:str = error.args[0]
+            embed_config:dict = fail_config[key_error]
+            embed = Embed(
+                title=embed_config["title"],
+                colour=config.colour[embed_config["colour"]],
+                description=embed_config["description"]
+            )
+            return embed
+
         guild_emote = await guild.fetch_emojis()
         emote_names = [emoji.name for emoji in guild_emote]
         emote_limit = guild.emoji_limit
 
-        if "Emote" not in self.selection.keys():
-            return False
-        
-        if "Server" not in self.selection.keys():
-            return False
+        embed_config:dict = None
 
         if emote.name in emote_names:
-            return False
+            embed_config:dict = fail_config["Duplicate"]
 
-        if len(emote_names) >= emote_limit:
-            return False
+        elif len(emote_names) >= emote_limit:
+            embed_config:dict = fail_config["Limit"]
 
-        return True
+        else:
+            valid:bool = True
+            embed_config:dict = pass_config
+
+        embed = Embed(
+            title=embed_config["title"],
+            colour=config.colour[embed_config["colour"]],
+            description=embed_config["description"].format(
+                emoji=emote.name, guild=guild.name
+            )
+        )
+
+        return embed
 
     async def callback(self, interaction:Interaction):
         '''Callback for confirm button'''
-        embed_config:dict = config.load(
-            path="commands/emotes/steal/embeds/confirm_button.json"
-        )
-        error_config:dict = config.load(
-            path="commands/emotes/steal/embeds/confirm_error.json"
-        )
-
-        # Check if the selections meet the requirements for adding
-        valid:bool = await self.valid_selection()
-
-        # Error embed
-        error = Embed(
-            title=error_config["title"],
-            colour=config.colour[error_config["colour"]],
-            description=error_config["description"]
-        )
-
-        # Check if valid emote selections have been made
-        if not valid:
+        try:
+            # Variable handling
+            emoji:Emoji = self.selection["Emote"]["emoji"]
+            guild:Guild = self.selection["Server"]["guild"]
+        except KeyError:
+            embed = await self.embed()
             await interaction.response.send_message(
-                embed=error, ephemeral=error_config["ephemeral"]
+                embed=embed, ephemeral=True
             )
             return
-
-        # Variable handling
-        emoji:Emoji = self.selection["Emote"]["emoji"]
-        guild:Guild = self.selection["Server"]["guild"]
         
         name:str = emoji.name
         image:str = requests.get(url=emoji.url).content
 
         # Response embed
-        embed = Embed(
-            title=embed_config["title"],
-            colour=config.colour[embed_config["colour"]],
-            description=embed_config["description"].format(
-                name=name, guild=guild
-            )
-        )
+        valid:bool = await self.valid()
+        embed:Embed = await self.embed()
         embed.set_thumbnail(url=emoji.url)
 
-        # Add selected emote to the server
-        await guild.create_custom_emoji(
-            name=name,
-            image=image
-        )
-
-        # Clear selection indicator embeds
-        for message in self.responses.values():
-            await message.delete()
-
-        self.responses = {}
-
         await interaction.response.send_message(
-            embed=embed, ephemeral=embed_config["ephemeral"]
+            embed=embed, ephemeral=True
         )
+
+        if valid:
+            # Add selected emote to the server
+            await guild.create_custom_emoji(
+                name=name,
+                image=image
+            )
+
+            # Clear selection indicator embeds
+            for message in self.responses.values():
+                await message.delete()
+
+            self.responses = {}
 
 class StealEmote(Select):
     def __init__(self, menu:dict, table:dict, selection:dict, responses:dict):
